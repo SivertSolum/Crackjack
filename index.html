@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRACKJACK - The World's Most Fair Casino™</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="scanlines"></div>
+    
+    <!-- Audio Player for Music -->
+    <audio id="bg-music" loop>
+        <source src="music/soundtrack.mp3" type="audio/mpeg">
+        <source src="music/soundtrack.ogg" type="audio/ogg">
+        <source src="music/soundtrack.wav" type="audio/wav">
+    </audio>
+    
+    <!-- Sound Effects are now synthesized via Web Audio API in game.js -->
+    
+    <!-- Shuffle Overlay -->
+    <div class="shuffle-overlay hidden" id="shuffle-overlay">
+        <div class="shuffle-message">
+            <h2>🔀 SHUFFLING 🔀</h2>
+            <p>The dealer is "randomly" shuffling the deck...</p>
+        </div>
+    </div>
+    
+    <!-- Reset Button (Top Left) -->
+    <button class="reset-btn hidden" id="reset-btn" title="Restart Game">🔄 RESET</button>
+    
+    <!-- Card Tracker (Left Side) -->
+    <div class="card-tracker hidden" id="card-tracker">
+        <h3>🃏 CARDS</h3>
+        <div class="suit-section">
+            <div class="suit-header spades">♠</div>
+            <div class="suit-cards" id="spades-cards">
+                <span class="tracker-card" data-card="A♠">A</span>
+                <span class="tracker-card" data-card="2♠">2</span>
+                <span class="tracker-card" data-card="3♠">3</span>
+                <span class="tracker-card" data-card="4♠">4</span>
+                <span class="tracker-card" data-card="5♠">5</span>
+                <span class="tracker-card" data-card="6♠">6</span>
+                <span class="tracker-card" data-card="7♠">7</span>
+                <span class="tracker-card" data-card="8♠">8</span>
+                <span class="tracker-card" data-card="9♠">9</span>
+                <span class="tracker-card" data-card="10♠">10</span>
+                <span class="tracker-card" data-card="J♠">J</span>
+                <span class="tracker-card" data-card="Q♠">Q</span>
+                <span class="tracker-card" data-card="K♠">K</span>
+            </div>
+        </div>
+        <div class="suit-section">
+            <div class="suit-header hearts">♥</div>
+            <div class="suit-cards" id="hearts-cards">
+                <span class="tracker-card" data-card="A♥">A</span>
+                <span class="tracker-card" data-card="2♥">2</span>
+                <span class="tracker-card" data-card="3♥">3</span>
+                <span class="tracker-card" data-card="4♥">4</span>
+                <span class="tracker-card" data-card="5♥">5</span>
+                <span class="tracker-card" data-card="6♥">6</span>
+                <span class="tracker-card" data-card="7♥">7</span>
+                <span class="tracker-card" data-card="8♥">8</span>
+                <span class="tracker-card" data-card="9♥">9</span>
+                <span class="tracker-card" data-card="10♥">10</span>
+                <span class="tracker-card" data-card="J♥">J</span>
+                <span class="tracker-card" data-card="Q♥">Q</span>
+                <span class="tracker-card" data-card="K♥">K</span>
+            </div>
+        </div>
+        <div class="suit-section">
+            <div class="suit-header diamonds">♦</div>
+            <div class="suit-cards" id="diamonds-cards">
+                <span class="tracker-card" data-card="A♦">A</span>
+                <span class="tracker-card" data-card="2♦">2</span>
+                <span class="tracker-card" data-card="3♦">3</span>
+                <span class="tracker-card" data-card="4♦">4</span>
+                <span class="tracker-card" data-card="5♦">5</span>
+                <span class="tracker-card" data-card="6♦">6</span>
+                <span class="tracker-card" data-card="7♦">7</span>
+                <span class="tracker-card" data-card="8♦">8</span>
+                <span class="tracker-card" data-card="9♦">9</span>
+                <span class="tracker-card" data-card="10♦">10</span>
+                <span class="tracker-card" data-card="J♦">J</span>
+                <span class="tracker-card" data-card="Q♦">Q</span>
+                <span class="tracker-card" data-card="K♦">K</span>
+            </div>
+        </div>
+        <div class="suit-section">
+            <div class="suit-header clubs">♣</div>
+            <div class="suit-cards" id="clubs-cards">
+                <span class="tracker-card" data-card="A♣">A</span>
+                <span class="tracker-card" data-card="2♣">2</span>
+                <span class="tracker-card" data-card="3♣">3</span>
+                <span class="tracker-card" data-card="4♣">4</span>
+                <span class="tracker-card" data-card="5♣">5</span>
+                <span class="tracker-card" data-card="6♣">6</span>
+                <span class="tracker-card" data-card="7♣">7</span>
+                <span class="tracker-card" data-card="8♣">8</span>
+                <span class="tracker-card" data-card="9♣">9</span>
+                <span class="tracker-card" data-card="10♣">10</span>
+                <span class="tracker-card" data-card="J♣">J</span>
+                <span class="tracker-card" data-card="Q♣">Q</span>
+                <span class="tracker-card" data-card="K♣">K</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Menu -->
+    <div class="main-menu" id="main-menu">
+        <div class="menu-content">
+            <div class="menu-logo">
+                <h1 class="menu-title">CRACKJACK</h1>
+                <p class="menu-subtitle">"Definitely Not Rigged"™</p>
+                <div class="menu-satan-sprite">
+                    <div class="menu-horns">
+                        <div class="menu-horn left"></div>
+                        <div class="menu-horn right"></div>
+                    </div>
+                    <div class="menu-satan-head">
+                        <div class="menu-satan-eyes">
+                            <div class="menu-eye left"><div class="menu-pupil"></div></div>
+                            <div class="menu-eye right"><div class="menu-pupil"></div></div>
+                        </div>
+                        <div class="menu-satan-mouth">
+                            <div class="menu-fang left"></div>
+                            <div class="menu-fang right"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="menu-buttons">
+                <button class="menu-btn start-btn" id="start-game-btn">
+                    🎲 START GAME
+                </button>
+                <button class="menu-btn options-btn" id="options-btn">
+                    ⚙️ OPTIONS
+                </button>
+                <button class="menu-btn how-to-btn" id="howto-btn">
+                    ❓ HOW TO PLAY
+                </button>
+            </div>
+            
+            <div class="menu-footer">
+                <p>© 2024 Satan's Casino Inc.</p>
+                <p class="disclaimer">Warning: You WILL lose.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Options Menu -->
+    <div class="options-menu hidden" id="options-menu">
+        <div class="options-content">
+            <h2>⚙️ OPTIONS</h2>
+            
+            <div class="option-row">
+                <span class="option-label">🔊 Music</span>
+                <button class="toggle-btn" id="music-toggle-opt">ON</button>
+            </div>
+            
+            <div class="option-row">
+                <span class="option-label">🎚️ Volume</span>
+                <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="30">
+            </div>
+            
+            <div class="option-row">
+                <span class="option-label">🔉 SFX</span>
+                <button class="toggle-btn" id="sfx-toggle-opt">ON</button>
+            </div>
+            
+            <div class="option-row file-option">
+                <span class="option-label">🎵 Custom Music</span>
+                <input type="file" id="custom-music" accept="audio/mpeg,audio/ogg,audio/wav,audio/*" class="file-input">
+                <label for="custom-music" class="file-label">Choose File</label>
+            </div>
+            
+            <button class="menu-btn back-btn" id="options-back-btn">← BACK</button>
+        </div>
+    </div>
+    
+    <!-- How To Play Menu -->
+    <div class="howto-menu hidden" id="howto-menu">
+        <div class="howto-content">
+            <h2>❓ HOW TO PLAY</h2>
+            
+            <div class="howto-text">
+                <p><strong>GOAL:</strong> Escape with $10,000!</p>
+                <p><strong>BLACKJACK:</strong> Get closer to 21 than the dealer without going over.</p>
+                <p><strong>CARDS:</strong> Number cards = face value, Face cards = 10, Aces = 1 or 11</p>
+                <p><strong>HIT:</strong> Take another card</p>
+                <p><strong>STAND:</strong> Keep your hand</p>
+                <p><strong>DOUBLE:</strong> Double bet, take one card, then stand</p>
+                <p><strong>WIN 3 HANDS:</strong> Choose a perk upgrade!</p>
+                <p><strong>BEAT THE BOSS:</strong> Advance to the next floor!</p>
+                <p class="warning-text">⚠️ The dealer may or may not cheat. Probably will.</p>
+            </div>
+            
+            <button class="menu-btn back-btn" id="howto-back-btn">← BACK</button>
+        </div>
+    </div>
+    
+    <!-- Music Controls (in-game) -->
+    <div class="music-controls hidden" id="music-controls">
+        <button class="music-btn" id="music-toggle" title="Toggle Music">🔇</button>
+        <div class="volume-slider-container" id="volume-container">
+            <input type="range" class="volume-slider-small" id="volume-slider-game" min="0" max="100" value="30">
+        </div>
+    </div>
+    
+    <div class="game-container hidden" id="game-container">
+        <header>
+            <h1>CRACKJACK</h1>
+        </header>
+
+        <div class="money-display">
+            <span class="money-label">YOUR LIFE SAVINGS:</span>
+            <span class="money-amount" id="money">$1000</span>
+        </div>
+
+        <div class="table">
+            <!-- Deck Pile Display -->
+            <div class="deck-area" id="deck-area">
+                <div class="deck-pile" id="deck-pile"></div>
+                <div class="deck-count" id="deck-count">52</div>
+                <div class="deck-label">DECK</div>
+            </div>
+            
+            <div class="dealer-section">
+                <div class="section-header">
+                    <div class="satan-container">
+                        <div class="satan">
+                            <div class="horns">
+                                <div class="horn left"></div>
+                                <div class="horn right"></div>
+                            </div>
+                            <div class="satan-head">
+                                <div class="satan-eyes">
+                                    <div class="eye left"><div class="pupil"></div></div>
+                                    <div class="eye right"><div class="pupil"></div></div>
+                                </div>
+                                <div class="satan-nose"></div>
+                                <div class="satan-mouth">
+                                    <div class="fang left"></div>
+                                    <div class="fang right"></div>
+                                </div>
+                            </div>
+                            <div class="goatee"></div>
+                        </div>
+                        <div class="flames">
+                            <div class="flame f1"></div>
+                            <div class="flame f2"></div>
+                            <div class="flame f3"></div>
+                        </div>
+                    </div>
+                    <span class="dealer-title">DEALER<br><span class="satan-subtitle">LORD OF LOSSES</span></span>
+                </div>
+                <div class="hand" id="dealer-hand"></div>
+                <div class="score" id="dealer-score"></div>
+            </div>
+
+            <div class="message-area" id="message">
+                <p>Place your bet to begin, sucker!</p>
+            </div>
+
+            <div class="player-section">
+                <div class="section-header">
+                    <div class="loser-container">
+                        <div class="loser">
+                            <div class="loser-hair">
+                                <div class="hair-strand s1"></div>
+                                <div class="hair-strand s2"></div>
+                                <div class="hair-strand s3"></div>
+                                <div class="bald-spot"></div>
+                            </div>
+                            <div class="loser-head">
+                                <div class="sweat-drops">
+                                    <div class="sweat s1"></div>
+                                    <div class="sweat s2"></div>
+                                    <div class="sweat s3"></div>
+                                </div>
+                                <div class="loser-eyes">
+                                    <div class="eye-bag left"></div>
+                                    <div class="eye-bag right"></div>
+                                    <div class="loser-eye left">
+                                        <div class="tired-lid"></div>
+                                        <div class="loser-pupil"></div>
+                                    </div>
+                                    <div class="loser-eye right">
+                                        <div class="tired-lid"></div>
+                                        <div class="loser-pupil"></div>
+                                    </div>
+                                </div>
+                                <div class="loser-nose"></div>
+                                <div class="loser-mouth">
+                                    <div class="missing-tooth"></div>
+                                </div>
+                                <div class="tear left"></div>
+                                <div class="tear right"></div>
+                                <div class="stubble"></div>
+                            </div>
+                            <div class="loser-neck">
+                                <div class="neck-fat"></div>
+                            </div>
+                        </div>
+                        <div class="stink-lines">
+                            <div class="stink s1">~</div>
+                            <div class="stink s2">~</div>
+                        </div>
+                    </div>
+                    <span class="player-title">YOU<br><span class="loser-subtitle">WALKING SCUM</span></span>
+                </div>
+                <div class="hand" id="player-hand"></div>
+                <div class="score" id="player-score"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="betting-controls" id="betting-controls">
+                <!-- Quick Rebet Section (shown after first hand) -->
+                <div class="rebet-section hidden" id="rebet-section">
+                    <button class="rebet-btn" id="same-bet-btn">
+                        🔄 SAME BET<br><span class="rebet-amount" id="rebet-amount">$100</span>
+                    </button>
+                    <span class="rebet-or">or change bet ↓</span>
+                </div>
+                
+                <div class="bet-buttons">
+                    <button class="bet-btn" data-amount="10">$10<br><span class="subtext">(Coward)</span></button>
+                    <button class="bet-btn" data-amount="50">$50<br><span class="subtext">(Meh)</span></button>
+                    <button class="bet-btn" data-amount="100">$100<br><span class="subtext">(Spicy)</span></button>
+                    <button class="bet-btn" data-amount="500">$500<br><span class="subtext">(Degenerate)</span></button>
+                    <button class="bet-btn all-in" data-amount="all">ALL IN<br><span class="subtext">(Legend)</span></button>
+                </div>
+                <div class="current-bet">
+                    Current Bet: <span id="current-bet">$0</span>
+                    <button class="deal-btn" id="deal-btn" disabled>DEAL ME IN</button>
+                </div>
+            </div>
+
+            <div class="game-controls hidden" id="game-controls">
+                <button class="action-btn hit-btn" id="hit-btn">
+                    👊 HIT<br><span class="subtext">(Bad Idea)</span>
+                </button>
+                <button class="action-btn stand-btn" id="stand-btn">
+                    🛑 STAND<br><span class="subtext">(Also Bad)</span>
+                </button>
+                <button class="action-btn double-btn" id="double-btn">
+                    💸 DOUBLE<br><span class="subtext">(Lmao)</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-label">Floor:</span>
+                <span class="stat-value" id="current-floor">1</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Wins:</span>
+                <span class="stat-value" id="win-streak">0</span>/<span class="stat-value" id="wins-needed">3</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Goal:</span>
+                <span class="stat-value" id="escape-goal">$10,000</span>
+            </div>
+        </div>
+
+        <!-- Active Upgrades Display -->
+        <div class="upgrades-bar" id="upgrades-bar">
+            <span class="upgrades-label">🎭 Perks:</span>
+            <div class="active-upgrades" id="active-upgrades">None yet...</div>
+        </div>
+
+    </div>
+
+    <!-- Scoreboard -->
+    <div class="scoreboard hidden" id="scoreboard">
+        <h3>📊 SCOREBOARD</h3>
+        <div class="scoreboard-entry dealer-entry">
+            <div class="scoreboard-icon">
+                <div class="mini-satan-sprite">
+                    <div class="mini-horns">
+                        <div class="mini-horn left"></div>
+                        <div class="mini-horn right"></div>
+                    </div>
+                    <div class="mini-satan-head">
+                        <div class="mini-satan-eyes">
+                            <div class="mini-eye left"></div>
+                            <div class="mini-eye right"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="scoreboard-info">
+                <span class="scoreboard-name">DEALER</span>
+                <span class="scoreboard-score" id="scoreboard-dealer">--</span>
+            </div>
+        </div>
+        <div class="scoreboard-vs">VS</div>
+        <div class="scoreboard-entry player-entry">
+            <div class="scoreboard-icon">
+                <div class="mini-loser-sprite">
+                    <div class="mini-loser-head">
+                        <div class="mini-loser-eyes">
+                            <div class="mini-loser-eye left"></div>
+                            <div class="mini-loser-eye right"></div>
+                        </div>
+                        <div class="mini-loser-mouth"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="scoreboard-info">
+                <span class="scoreboard-name">YOU</span>
+                <span class="scoreboard-score" id="scoreboard-player">--</span>
+            </div>
+        </div>
+        <div class="scoreboard-history">
+            <span class="history-label">History:</span>
+            <div class="history-list" id="history-list">-</div>
+        </div>
+    </div>
+
+    <!-- Upgrade Selection Popup -->
+    <div class="popup hidden" id="upgrade-popup">
+        <div class="popup-content upgrade-content">
+            <h2>🎁 CHOOSE YOUR PERK 🎁</h2>
+            <p class="upgrade-subtitle">You survived! Pick a reward:</p>
+            <div class="upgrade-options" id="upgrade-options"></div>
+        </div>
+    </div>
+
+    <!-- Boss Announcement Popup -->
+    <div class="popup hidden" id="boss-popup">
+        <div class="popup-content boss-content">
+            <div class="boss-portrait" id="boss-portrait"></div>
+            <h2 id="boss-name">BOSS FIGHT</h2>
+            <p class="boss-description" id="boss-description"></p>
+            <p class="boss-rule" id="boss-rule"></p>
+            <button class="boss-fight-btn" id="boss-fight-btn">⚔️ FIGHT ⚔️</button>
+        </div>
+    </div>
+
+    <!-- Victory Popup -->
+    <div class="popup hidden" id="victory-popup">
+        <div class="popup-content victory-content">
+            <h2>🏆 YOU ESCAPED! 🏆</h2>
+            <p class="victory-message">Against all odds, you beat Satan's casino!</p>
+            <p class="victory-stats" id="victory-stats"></p>
+            <button class="restart-btn" id="victory-restart-btn">🎰 Play Again?</button>
+        </div>
+    </div>
+
+    <div class="popup hidden" id="broke-popup">
+        <div class="popup-content">
+            <h2>💀 YOU'RE BROKE 💀</h2>
+            <p class="broke-message" id="broke-message"></p>
+            <button class="restart-btn" id="restart-btn">🔄 Try Again (Why Though?)</button>
+        </div>
+    </div>
+
+    <!-- Modular JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
+
