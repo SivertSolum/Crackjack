@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRACKJACK - The World's Most Fair Casino™</title>
-    <link rel="stylesheet" href="style.css?v=21">
+    <link rel="stylesheet" href="style.css?v=28">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -27,8 +27,11 @@
         </div>
     </div>
     
-    <!-- Reset Button (Top Left) -->
-    <button class="reset-btn hidden" id="reset-btn" title="Restart Game">🔄 RESET</button>
+    <!-- Top Left Buttons -->
+    <div class="top-left-buttons hidden" id="top-left-buttons">
+        <button class="reset-btn" id="reset-btn" title="Restart Game">🔄 RESET</button>
+        <button class="menu-btn-small" id="menu-btn" title="Back to Menu">🏠 MENU</button>
+    </div>
     
     <!-- Card Tracker (Left Side) -->
     <div class="card-tracker hidden" id="card-tracker">
@@ -331,15 +334,15 @@
 
         <div class="controls">
             <div class="betting-controls" id="betting-controls">
-                <!-- Quick Rebet Section (shown after first hand) -->
-                <div class="rebet-section hidden" id="rebet-section">
-                    <button class="rebet-btn" id="same-bet-btn">
-                        🔄 SAME BET<br><span class="rebet-amount" id="rebet-amount">$100</span>
-                    </button>
-                    <span class="rebet-or">or change bet ↓</span>
-                </div>
-                
+                <!-- Combined Rebet + Side Bets Row -->
                 <div class="side-bets-and-rebet-container">
+                    <!-- Quick Rebet Section (shown after first hand) -->
+                    <div class="rebet-section hidden" id="rebet-section">
+                        <button class="rebet-btn" id="same-bet-btn">
+                            🔄 <span class="rebet-amount" id="rebet-amount">$100</span>
+                        </button>
+                    </div>
+                
                     <!-- Side Bets Section -->
                     <div class="side-bets-section" id="side-bets-section">
                         <div class="side-bet-option">
@@ -488,15 +491,6 @@
         </div>
     </div>
 
-    <!-- Upgrade Selection Popup -->
-    <div class="popup hidden" id="upgrade-popup">
-        <div class="popup-content upgrade-content">
-            <h2>🎁 CHOOSE YOUR REWARD!</h2>
-            <p class="upgrade-subtitle">You've won 3 in a row! Pick a perk:</p>
-            <div class="upgrade-options" id="upgrade-options"></div>
-        </div>
-    </div>
-
     <!-- Boss Announcement Popup -->
     <div class="popup hidden" id="boss-popup">
         <div class="popup-content boss-content">
@@ -527,11 +521,11 @@
     </div>
 
     <!-- Modular JavaScript -->
-    <script src="js/config.js?v=20"></script>
-    <script src="js/audio.js?v=20"></script>
-    <script src="js/ui.js?v=20"></script>
-    <script src="js/game.js?v=21"></script>
-    <script src="js/main.js?v=20"></script>
+    <script src="js/config.js?v=22"></script>
+    <script src="js/audio.js?v=22"></script>
+    <script src="js/ui.js?v=27"></script>
+    <script src="js/game.js?v=22"></script>
+    <script src="js/main.js?v=22"></script>
 </body>
 </html>
 

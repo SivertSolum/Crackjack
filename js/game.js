@@ -21,6 +21,29 @@ class CrackJack {
         this.isBossFight = false;
         this.currentBoss = null;
         this.totalWins = 0;
+        
+        // Split state
+        this.isSplitHand = false;
+        this.splitHands = [];
+        this.splitBets = [];
+        this.currentSplitHandIndex = 0;
+        
+        // Shop state
+        this.shopInventory = [];
+        
+        // Side bets
+        this.sideBetPP = 0;
+        this.sideBet21Plus3 = 0;
+        this.sideBetPayouts = {
+            mixedPair: 5,
+            coloredPair: 10,
+            perfectPair: 25,
+            flush: 5,
+            straight: 10,
+            threeOfAKind: 30,
+            straightFlush: 40,
+            suitedTrips: 100
+        };
 
         // Data from config
         this.allPerks = PERKS;
@@ -526,6 +549,16 @@ class CrackJack {
         }
 
         this.doubleBtn.disabled = this.money < this.currentBet;
+        
+        // Reset split state
+        this.isSplitHand = false;
+        this.splitHands = [];
+        this.splitBets = [];
+        this.currentSplitHandIndex = 0;
+        
+        // Update split button
+        this.updateSplitButton();
+        
         this.showMessage("Your move, genius. 🤔");
         this.updateScores(true);
     }
@@ -552,8 +585,16 @@ class CrackJack {
 
     async hit() {
         if (!this.gameInProgress) return;
+        if (this.isPopupOpen()) return;
 
         this.doubleBtn.disabled = true;
+        if (this.splitBtn) this.splitBtn.disabled = true;
+        
+        // Handle split hands
+        if (this.isSplitHand) {
+            await this.hitSplitHand();
+            return;
+        }
         
         const card = this.drawCard();
         this.playerHand.push(card);
@@ -595,6 +636,37 @@ class CrackJack {
             this.showMessage("21! Let's see the dealer's response...");
             await this.delay(400);
             this.stand();
+        }
+    }
+    
+    async hitSplitHand() {
+        const card = this.drawCard();
+        this.splitHands[this.currentSplitHandIndex].push(card);
+        
+        playCardDealSound();
+        this.renderSplitHands(this.currentSplitHandIndex);
+        this.updateSplitScores();
+        
+        const score = this.calculateScore(this.splitHands[this.currentSplitHandIndex], true);
+        
+        if (score > 21) {
+            await this.delay(400);
+            this.showMessage(`Hand ${this.currentSplitHandIndex + 1} BUSTS! 💥`);
+            await this.delay(500);
+            
+            // Move to next hand or resolve
+            if (this.currentSplitHandIndex === 0) {
+                this.currentSplitHandIndex = 1;
+                this.renderSplitHands();
+                this.showMessage("Now playing Hand 2...");
+            } else {
+                // Both hands done, resolve
+                await this.resolveSplitHands();
+            }
+        } else if (score === 21) {
+            await this.delay(400);
+            this.showMessage(`Hand ${this.currentSplitHandIndex + 1} has 21!`);
+            await this.standSplitHand();
         }
     }
 
@@ -809,10 +881,18 @@ class CrackJack {
 
     async stand() {
         if (!this.gameInProgress) return;
+        if (this.isPopupOpen()) return;
+
+        // Handle split hands
+        if (this.isSplitHand) {
+            await this.standSplitHand();
+            return;
+        }
 
         this.hitBtn.disabled = true;
         this.standBtn.disabled = true;
         this.doubleBtn.disabled = true;
+        if (this.splitBtn) this.splitBtn.disabled = true;
 
         await this.revealDealerCard();
         
@@ -1077,6 +1157,285 @@ class CrackJack {
         }
     }
 
+    // === PRE-ROUND SHOP ===
+    
+    showPreRoundShop() {
+        if (!this.preRoundShopPopup) return;
+        if (this.gameInProgress) return;
+        
+        this.refreshShopInventory();
+        this.renderPreRoundShopItems();
+        this.renderActivePerksInShop();
+        this.preRoundShopMoney.textContent = `$${this.money}`;
+        this.preRoundShopPopup.classList.remove('hidden');
+    }
+    
+    hidePreRoundShop() {
+        if (this.preRoundShopPopup) {
+            this.preRoundShopPopup.classList.add('hidden');
+        }
+    }
+    
+    refreshShopInventory() {
+        // Get available perks (ones player doesn't already have)
+        const availablePerks = this.allPerks.filter(p => !this.hasPerk(p.id));
+        
+        // Shuffle and pick 3
+        const shuffled = availablePerks.sort(() => Math.random() - 0.5);
+        this.shopInventory = shuffled.slice(0, 3);
+    }
+    
+    renderPreRoundShopItems() {
+        if (!this.preRoundShopItems) return;
+        
+        this.preRoundShopItems.innerHTML = '';
+        
+        if (!this.shopInventory || this.shopInventory.length === 0) {
+            this.preRoundShopItems.innerHTML = '<p class="shop-empty">No perks available!</p>';
+            return;
+        }
+        
+        this.shopInventory.forEach((perk, index) => {
+            const canAfford = this.money >= perk.cost;
+            const btn = document.createElement('button');
+            btn.className = `perk-shop-item ${canAfford ? '' : 'cannot-afford'}`;
+            btn.innerHTML = `
+                <span class="perk-icon">${perk.icon}</span>
+                <span class="perk-name">${perk.name}</span>
+                <span class="perk-desc">${perk.desc}</span>
+                <span class="perk-cost ${canAfford ? 'affordable' : 'expensive'}">$${perk.cost}</span>
+            `;
+            
+            if (canAfford) {
+                btn.addEventListener('click', () => this.buyPerkFromShop(index));
+            } else {
+                btn.disabled = true;
+            }
+            
+            this.preRoundShopItems.appendChild(btn);
+        });
+    }
+    
+    buyPerkFromShop(index) {
+        const perk = this.shopInventory[index];
+        if (!perk || this.money < perk.cost) return;
+        
+        // Deduct cost
+        this.money -= perk.cost;
+        
+        // Add perk
+        const newPerk = { ...perk };
+        if (newPerk.maxUses) {
+            newPerk.uses = newPerk.maxUses;
+        }
+        this.activePerks.push(newPerk);
+        
+        // Remove from shop inventory
+        this.shopInventory.splice(index, 1);
+        
+        // Update displays
+        this.updateDisplay();
+        this.updateRoguelikeDisplay();
+        this.preRoundShopMoney.textContent = `$${this.money}`;
+        this.renderPreRoundShopItems();
+        this.renderActivePerksInShop();
+        
+        // Play sound
+        if (typeof playChipSound === 'function') playChipSound();
+        
+        this.showMessage(`🎉 Purchased ${perk.name}!`);
+    }
+    
+    renderActivePerksInShop() {
+        if (!this.shopActivePerksListEl) return;
+        
+        if (this.activePerks.length === 0) {
+            this.shopActivePerksListEl.innerHTML = 'None yet...';
+        } else {
+            this.shopActivePerksListEl.innerHTML = this.activePerks.map(p => 
+                `<span class="perk-badge">${p.icon} ${p.name}</span>`
+            ).join(' ');
+        }
+    }
+
+    // === SPLIT FUNCTIONALITY ===
+    
+    canSplit() {
+        if (this.playerHand.length !== 2) return false;
+        if (this.money < this.currentBet) return false;
+        if (this.isSplitHand) return false;
+        
+        const val1 = this.playerHand[0].value;
+        const val2 = this.playerHand[1].value;
+        
+        // Can split if same value
+        return val1 === val2;
+    }
+    
+    updateSplitButton() {
+        if (this.splitBtn) {
+            this.splitBtn.disabled = !this.canSplit();
+        }
+    }
+    
+    async split() {
+        if (!this.canSplit()) return;
+        if (!this.gameInProgress) return;
+        if (this.isPopupOpen()) return;
+        
+        // Deduct additional bet for second hand
+        this.money -= this.currentBet;
+        this.updateDisplay();
+        
+        // Create two hands
+        this.splitHands = [
+            [this.playerHand[0]],
+            [this.playerHand[1]]
+        ];
+        this.splitBets = [this.currentBet, this.currentBet];
+        this.currentSplitHandIndex = 0;
+        this.isSplitHand = true;
+        
+        // Deal one card to each hand
+        const card1 = this.drawCard();
+        const card2 = this.drawCard();
+        this.splitHands[0].push(card1);
+        this.splitHands[1].push(card2);
+        
+        // Disable split button
+        if (this.splitBtn) this.splitBtn.disabled = true;
+        
+        // Render split hands
+        this.renderSplitHands(0);
+        
+        playCardDealSound();
+        await this.delay(300);
+        
+        this.renderSplitHands(1);
+        playCardDealSound();
+        
+        this.showMessage("✂️ Hand split! Play Hand 1 first.");
+        this.updateSplitScores();
+    }
+    
+    renderSplitHands(animateHandIndex = -1) {
+        this.playerHandEl.innerHTML = '';
+        
+        this.splitHands.forEach((hand, handIndex) => {
+            const handContainer = document.createElement('div');
+            handContainer.className = `split-hand ${handIndex === this.currentSplitHandIndex ? 'active' : ''}`;
+            handContainer.innerHTML = `<div class="split-hand-label">Hand ${handIndex + 1}</div>`;
+            
+            const cardsContainer = document.createElement('div');
+            cardsContainer.className = 'split-cards';
+            
+            hand.forEach((card, cardIndex) => {
+                const cardEl = this.createCardElement(card);
+                // Only animate the last card of the animating hand
+                if (handIndex === animateHandIndex && cardIndex === hand.length - 1) {
+                    cardEl.classList.add('dealing');
+                }
+                cardsContainer.appendChild(cardEl);
+            });
+            
+            handContainer.appendChild(cardsContainer);
+            this.playerHandEl.appendChild(handContainer);
+        });
+    }
+    
+    updateSplitScores() {
+        const scores = this.splitHands.map(h => this.calculateScore(h, true));
+        this.playerScoreEl.textContent = `H1: ${scores[0]} | H2: ${scores[1]}`;
+    }
+    
+    async standSplitHand() {
+        this.showMessage(`Hand ${this.currentSplitHandIndex + 1} stands.`);
+        await this.delay(500);
+        
+        if (this.currentSplitHandIndex === 0) {
+            this.currentSplitHandIndex = 1;
+            this.renderSplitHands();
+            this.showMessage("Now playing Hand 2...");
+        } else {
+            // Both hands done, resolve against dealer
+            await this.resolveSplitHands();
+        }
+    }
+    
+    async resolveSplitHands() {
+        this.hitBtn.disabled = true;
+        this.standBtn.disabled = true;
+        this.doubleBtn.disabled = true;
+        if (this.splitBtn) this.splitBtn.disabled = true;
+        
+        // Reveal dealer and play
+        await this.revealDealerCard();
+        
+        let dealerScore = this.calculateScore(this.dealerHand);
+        const standThreshold = 17;
+        
+        while (dealerScore < standThreshold) {
+            const card = this.drawCard();
+            this.dealerHand.push(card);
+            playCardDealSound();
+            const cardEl = this.createCardElement(card);
+            this.dealerHandEl.appendChild(cardEl);
+            await this.delay(500);
+            dealerScore = this.calculateScore(this.dealerHand);
+        }
+        
+        this.updateScores();
+        
+        // Resolve each hand
+        let totalWinnings = 0;
+        let wins = 0;
+        let losses = 0;
+        
+        for (let i = 0; i < this.splitHands.length; i++) {
+            const handScore = this.calculateScore(this.splitHands[i], true);
+            const bet = this.splitBets[i];
+            
+            if (handScore > 21) {
+                losses++;
+                // Already lost
+            } else if (dealerScore > 21 || handScore > dealerScore) {
+                wins++;
+                totalWinnings += bet * 2;
+            } else if (handScore === dealerScore) {
+                // Push - return bet
+                totalWinnings += bet;
+            } else {
+                losses++;
+            }
+        }
+        
+        this.money += totalWinnings;
+        
+        // Determine overall result
+        if (wins > losses) {
+            playWinSound();
+            this.showMessage(`✂️ Split WIN! ${wins} wins, ${losses} losses. +$${totalWinnings}`, 'win');
+            this.winStreak++;
+            this.totalWins++;
+            this.endRound(true);
+        } else if (losses > wins) {
+            playLoseSound();
+            this.showMessage(`✂️ Split LOSS. ${wins} wins, ${losses} losses.`, 'lose');
+            this.winStreak = 0;
+            this.timesLost++;
+            this.endRound(false);
+        } else {
+            playChipSound();
+            this.showMessage(`✂️ Split PUSH. ${wins} wins, ${losses} losses.`);
+            this.endRound(null);
+        }
+        
+        // Reset split state
+        this.isSplitHand = false;
+        this.splitHands = [];
+        this.splitBets = [];
+    }
+
     // === UI HELPERS ===
 
     resetForNewRound() {
@@ -1088,6 +1447,7 @@ class CrackJack {
         this.hitBtn.disabled = false;
         this.standBtn.disabled = false;
         this.doubleBtn.disabled = false;
+        if (this.splitBtn) this.splitBtn.disabled = true;
         document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('selected'));
         this.messageEl.classList.remove('win', 'lose');
         
@@ -1096,6 +1456,15 @@ class CrackJack {
         this.dealerScoreEl.textContent = '';
         this.playerScoreEl.textContent = '';
         this.clearScoreboard();
+        
+        // Reset split state
+        this.isSplitHand = false;
+        this.splitHands = [];
+        this.splitBets = [];
+        this.currentSplitHandIndex = 0;
+        
+        // Refresh shop inventory for next round
+        this.refreshShopInventory();
         
         if (this.lastBet > 0 && this.money > 0) {
             this.rebetSection.classList.remove('hidden');

@@ -292,11 +292,24 @@ header h1 {
 .section-header {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     font-size: 0.55rem;
-    padding: 3px 6px;
+    padding: 4px 8px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Make dealer icon larger on the game table */
+.section-header .satan-container {
+    width: 50px;
+    height: 50px;
+    transform: scale(1.4);
+}
+
+.section-header .loser-container {
+    width: 45px;
+    height: 45px;
+    transform: scale(1.3);
 }
 
 .avatar {
@@ -1018,9 +1031,26 @@ header h1 {
 .betting-controls {
     background: #1a0a2e;
     border: 2px solid var(--purple);
-    padding: 8px;
+    padding: 8px 12px;
     box-shadow: 2px 2px 0px #000;
     flex-shrink: 0;
+}
+
+/* Container for side bets - horizontal layout */
+.side-bets-and-rebet-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.side-bets-total {
+    font-size: 0.55rem;
+    color: var(--gold);
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    white-space: nowrap;
 }
 
 /* Side Bets Section */
@@ -1044,23 +1074,32 @@ header h1 {
 
 .rebet-btn {
     font-family: 'Press Start 2P', monospace;
-    font-size: 0.6rem;
-    padding: 12px 20px;
+    font-size: 0.7rem;
+    padding: 16px 28px;
     background: linear-gradient(180deg, #228822 0%, #115511 100%);
     color: var(--gold);
-    border: 3px solid var(--gold);
+    border: 4px solid var(--gold);
     cursor: pointer;
-    box-shadow: 3px 3px 0px #000;
+    box-shadow: 4px 4px 0px #000;
     transition: all 0.2s ease;
-    line-height: 1.4;
-    height: 100%;
-    min-height: 60px;
+    line-height: 1.3;
+    white-space: nowrap;
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .rebet-btn:hover {
     background: linear-gradient(180deg, #33aa33 0%, #227722 100%);
     transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0px #000;
+    box-shadow: 3px 3px 0px #000;
+}
+
+.rebet-amount {
+    font-size: 0.6rem;
+    color: #66ff66;
 }
 
 .rebet-amount {
@@ -1070,21 +1109,21 @@ header h1 {
 
 .side-bets-section {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     background: rgba(26, 0, 51, 0.8);
     border: 1px solid #6633cc;
     border-radius: 4px;
-    padding: 8px 12px;
+    padding: 6px 10px;
+    flex: 1;
 }
 
 .side-bet-option {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid #444;
     border-radius: 4px;
-    padding: 8px 10px;
+    padding: 4px 8px;
     flex: 1;
-    max-width: 220px;
 }
 
 .side-bet-label {
@@ -1092,8 +1131,8 @@ header h1 {
     justify-content: center;
     align-items: center;
     gap: 4px;
-    margin-bottom: 4px;
-    font-size: 0.6rem;
+    margin-bottom: 3px;
+    font-size: 0.5rem;
 }
 
 .side-bet-name {
@@ -1112,14 +1151,14 @@ header h1 {
 
 .side-bet-buttons {
     display: flex;
-    gap: 3px;
+    gap: 2px;
     justify-content: center;
 }
 
 .side-bet-btn {
     font-family: 'Press Start 2P', cursive;
-    font-size: 0.5rem;
-    padding: 5px 7px;
+    font-size: 0.4rem;
+    padding: 4px 5px;
     background: #333;
     border: 1px solid #555;
     color: #888;
@@ -1217,14 +1256,15 @@ header h1 {
 
 .bet-buttons {
     display: flex;
-    gap: 5px;
+    gap: 4px;
     justify-content: stretch;
+    margin-bottom: 6px;
 }
 
 .bet-btn {
     font-family: 'Press Start 2P', monospace;
-    font-size: 0.6rem;
-    padding: 10px 6px;
+    font-size: 0.55rem;
+    padding: 8px 4px;
     background: linear-gradient(180deg, #444 0%, #222 100%);
     color: var(--gold);
     border: 2px solid var(--gold);
@@ -1438,6 +1478,10 @@ header h1 {
     display: none !important;
 }
 
+.popup.hidden {
+    display: none !important;
+}
+
 /* Stats Bar */
 .stats-bar {
     display: flex;
@@ -1505,12 +1549,16 @@ header h1 {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.9);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 2000;
     /* Prevent backdrop clicks from doing anything */
     pointer-events: auto;
+}
+
+.popup:not(.hidden) {
+    display: flex;
 }
 
 .popup-content {
@@ -2271,6 +2319,20 @@ header h1 {
     box-shadow: 1px 1px 0px #000;
 }
 
+/* Top Left Buttons Container */
+.top-left-buttons {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+}
+
+.top-left-buttons.hidden {
+    display: none;
+}
+
 /* Reset Button */
 .reset-btn {
     font-family: 'Press Start 2P', monospace;
@@ -2291,6 +2353,30 @@ header h1 {
 }
 
 .reset-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0px #000;
+}
+
+/* Menu Button (small) */
+.menu-btn-small {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, #4a2c7a 0%, #2a1a4a 100%);
+    color: var(--gold);
+    border: 3px solid var(--purple);
+    cursor: pointer;
+    box-shadow: 3px 3px 0px #000;
+    transition: all 0.2s ease;
+}
+
+.menu-btn-small:hover {
+    background: linear-gradient(180deg, #6a3c9a 0%, #3a2a5a 100%);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px #000;
+}
+
+.menu-btn-small:active {
     transform: translate(2px, 2px);
     box-shadow: 1px 1px 0px #000;
 }
@@ -2667,10 +2753,6 @@ header h1 {
 
 /* Room Indicator Bar */
 /* Room indicator removed - floor info shown in stats bar */
-    padding: 2px 6px;
-    background: rgba(255, 215, 0, 0.2);
-    border-radius: 3px;
-}
 
 /* Curses Bar */
 .curses-bar {

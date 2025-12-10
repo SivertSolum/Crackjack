@@ -19,8 +19,16 @@ function hideMainMenu() {
     document.getElementById('scoreboard').classList.remove('hidden');
     const cardTracker = document.getElementById('card-tracker');
     if (cardTracker) cardTracker.classList.remove('hidden');
-    const resetBtn = document.getElementById('reset-btn');
-    if (resetBtn) resetBtn.classList.remove('hidden');
+    const topLeftBtns = document.getElementById('top-left-buttons');
+    if (topLeftBtns) topLeftBtns.classList.remove('hidden');
+}
+
+function backToMenu() {
+    // Reset game state
+    if (window.game) {
+        window.game = null;
+    }
+    showMainMenu();
 }
 
 function showOptions() {
