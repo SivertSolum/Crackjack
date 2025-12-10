@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRACKJACK - The World's Most Fair Casino™</title>
+<<<<<<< Updated upstream
     <link rel="stylesheet" href="style.css">
+=======
+    <link rel="stylesheet" href="style.css?v=14">
+>>>>>>> Stashed changes
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -144,9 +148,22 @@
             </div>
             
             <div class="menu-footer">
+                <p class="version-number" id="version-number">v1.0.0</p>
+                <button class="changelog-btn" id="changelog-btn">📜 Changelog</button>
                 <p>© 2024 Satan's Casino Inc.</p>
                 <p class="disclaimer">Warning: You WILL lose.</p>
             </div>
+        </div>
+    </div>
+    
+    <!-- Changelog Modal -->
+    <div class="changelog-menu hidden" id="changelog-menu">
+        <div class="changelog-content">
+            <h2>📜 CHANGELOG</h2>
+            <div class="changelog-entries" id="changelog-entries">
+                <!-- Populated by JavaScript -->
+            </div>
+            <button class="menu-btn back-btn" id="changelog-back-btn">← BACK</button>
         </div>
     </div>
     
@@ -461,11 +478,28 @@
     </div>
 
     <!-- Modular JavaScript -->
+<<<<<<< Updated upstream
     <script src="js/config.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
     <script src="js/main.js"></script>
+=======
+    <!-- Configuration & Data -->
+    <script src="js/config.js?v=15"></script>
+    
+    <!-- Audio System -->
+    <script src="js/audio.js?v=9"></script>
+    
+    <!-- UI Navigation -->
+    <script src="js/ui.js?v=10"></script>
+    
+    <!-- Game Engine -->
+    <script src="js/game.js?v=15"></script>
+    
+    <!-- Main Entry Point -->
+    <script src="js/main.js?v=10"></script>
+>>>>>>> Stashed changes
 </body>
 </html>
 

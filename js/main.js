@@ -12,6 +12,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('options-back-btn').addEventListener('click', hideOptions);
     document.getElementById('howto-back-btn').addEventListener('click', hideHowTo);
     
+    // Changelog event listeners
+    const changelogBtn = document.getElementById('changelog-btn');
+    const changelogBackBtn = document.getElementById('changelog-back-btn');
+    if (changelogBtn) {
+        changelogBtn.addEventListener('click', showChangelog);
+    }
+    if (changelogBackBtn) {
+        changelogBackBtn.addEventListener('click', hideChangelog);
+    }
+    
+    // Initialize version display
+    updateVersionDisplay();
+    
     // Options event listeners
     document.getElementById('music-toggle-opt').addEventListener('click', toggleMusic);
     document.getElementById('sfx-toggle-opt').addEventListener('click', toggleSfx);

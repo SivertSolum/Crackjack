@@ -1,6 +1,29 @@
 // CRACKJACK - Game Configuration
 // All game data, perks, bosses, and messages
 
+// Version and Changelog
+const VERSION = {
+    number: '1.0.0',
+    date: '2024-12-10',
+    changelog: [
+        {
+            version: '1.0.0',
+            date: '2024-12-10',
+            title: 'Initial Release',
+            changes: [
+                'Full roguelike blackjack experience with 7 floors',
+                'Satan and 6 unique floor bosses',
+                'Perk and relic system with 15+ upgrades',
+                'Side bets: Perfect Pairs and 21+3',
+                'Random events and shop system',
+                'Card tracker and scoreboard',
+                'Retro pixel art aesthetic with CSS-only characters',
+                'Custom music support'
+            ]
+        }
+    ]
+};
+
 const CONFIG = {
     STARTING_MONEY: 1000,
     ESCAPE_GOAL: 10000,

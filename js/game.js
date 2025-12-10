@@ -92,12 +92,59 @@ class CrackJack {
         this.deckCountEl = document.getElementById('deck-count');
         this.shuffleOverlay = document.getElementById('shuffle-overlay');
         this.cardTrackerEl = document.getElementById('card-tracker');
+<<<<<<< Updated upstream
+=======
+        
+        // New roguelike elements
+        this.eventPopup = document.getElementById('event-popup');
+        this.shopPopup = document.getElementById('shop-popup');
+        this.mapPopup = document.getElementById('map-popup');
+        this.roomIndicator = document.getElementById('room-indicator');
+        this.relicsDisplay = document.getElementById('relics-display');
+        this.cursesDisplay = document.getElementById('curses-display');
+        
+        // Pre-round shop elements
+        this.preRoundShopBtn = document.getElementById('pre-round-shop-btn');
+        this.preRoundShopPopup = document.getElementById('pre-round-shop-popup');
+        this.preRoundShopItems = document.getElementById('pre-round-shop-items');
+        this.preRoundShopMoney = document.getElementById('pre-round-shop-money');
+        this.preRoundShopClose = document.getElementById('pre-round-shop-close');
+        this.shopActivePerksListEl = document.getElementById('shop-active-perks-list');
+        
+        // Ensure pre-round shop is hidden on init
+        if (this.preRoundShopPopup) {
+            this.preRoundShopPopup.classList.add('hidden');
+        }
+>>>>>>> Stashed changes
     }
 
     bindEvents() {
         document.querySelectorAll('.bet-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.placeBet(e.target.closest('.bet-btn')));
         });
+<<<<<<< Updated upstream
+=======
+        
+        // Pre-round shop
+        if (this.preRoundShopBtn) {
+            this.preRoundShopBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showPreRoundShop();
+            });
+        }
+        if (this.preRoundShopClose) {
+            this.preRoundShopClose.addEventListener('click', () => this.hidePreRoundShop());
+        }
+        
+        // Prevent popup backdrop clicks from closing - only close via buttons
+        document.querySelectorAll('.popup').forEach(popup => {
+            // Stop clicks on popup content from bubbling to backdrop
+            const content = popup.querySelector('.popup-content');
+            if (content) {
+                content.addEventListener('click', (e) => e.stopPropagation());
+            }
+        });
+>>>>>>> Stashed changes
 
         this.dealBtn.addEventListener('click', () => this.deal());
         this.hitBtn.addEventListener('click', () => this.hit());
@@ -312,6 +359,7 @@ class CrackJack {
 
     placeBet(btn) {
         if (this.gameInProgress) return;
+        if (this.isPopupOpen()) return;
 
         const amount = btn.dataset.amount;
         let bet;
@@ -349,6 +397,7 @@ class CrackJack {
 
     sameBet() {
         if (this.gameInProgress) return;
+        if (this.isPopupOpen()) return;
         if (this.lastBet <= 0) return;
 
         if (this.lastBet > this.money) {
@@ -369,8 +418,63 @@ class CrackJack {
 
     // === GAME ACTIONS ===
 
+    isPopupOpen() {
+        // Check if any popup is currently visible
+        const popups = document.querySelectorAll('.popup:not(.hidden)');
+        return popups.length > 0;
+    }
+
     async deal() {
+<<<<<<< Updated upstream
         if (this.currentBet <= 0 || this.currentBet > this.money) return;
+=======
+        // Don't deal if a popup is open
+        if (this.isPopupOpen()) return;
+        
+        // Lucky Start perk: free $10 side bet each hand (randomly PP or 21+3)
+        if (this.hasSideBetPerk('luckyStart')) {
+            if (this.sideBetPP === 0 && this.sideBet21Plus3 === 0) {
+                // Add free side bet if player hasn't placed any
+                if (Math.random() < 0.5) {
+                    this.sideBetPP = 10;
+                    this.showMessage("🌟 Lucky Start: Free $10 Perfect Pairs bet!");
+                } else {
+                    this.sideBet21Plus3 = 10;
+                    this.showMessage("🌟 Lucky Start: Free $10 21+3 bet!");
+                }
+                this.updateSideBetsDisplay();
+            }
+        }
+        
+        // Calculate total bet including side bets
+        let totalSideBets = this.sideBetPP + this.sideBet21Plus3;
+        
+        // Side Insurance perk: 20% off side bets
+        let sideBetDiscount = 0;
+        if (this.hasSideBetPerk('sideInsurance') && totalSideBets > 0) {
+            sideBetDiscount = Math.floor(totalSideBets * 0.2);
+            totalSideBets -= sideBetDiscount;
+        }
+        
+        const totalRequired = this.currentBet + totalSideBets;
+        
+        if (this.currentBet <= 0 || totalRequired > this.money) return;
+
+        // Apply per-hand costs (curses)
+        if (this.hasCurse('heavyDebt')) {
+            const cost = 25;
+            this.money -= cost;
+            this.showMessage(`💸 Heavy Debt: -$${cost}`);
+            this.updateDisplay();
+        }
+        
+        // Zen Mind perk: gain money at start of hand
+        if (this.hasPerk('meditation')) {
+            this.money += 30;
+            this.showMessage("🧘 Zen Mind: +$30");
+            this.updateDisplay();
+        }
+>>>>>>> Stashed changes
 
         await this.checkAndReshuffle();
 
@@ -521,7 +625,301 @@ class CrackJack {
             this.addToHistory(score, dealerScore, 'loss');
             this.endRound(false);
         } else {
+<<<<<<< Updated upstream
             await this.stand();
+=======
+            playChipSound();
+            this.showMessage(`✂️ Split Results: Break even. ${resultsMessage}`);
+            this.endRound(null);
+        }
+    }
+
+    // === SIDE BETS ===
+    
+    placeSideBet(btn) {
+        if (this.gameInProgress) return;
+        if (this.isPopupOpen()) return;
+        
+        const type = btn.dataset.type;
+        const amount = parseInt(btn.dataset.amount);
+        
+        // Deselect other buttons of the same type
+        const container = type === 'pp' ? document.getElementById('pp-buttons') : document.getElementById('21plus3-buttons');
+        container.querySelectorAll('.side-bet-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Set the bet
+        if (type === 'pp') {
+            this.sideBetPP = amount;
+        } else if (type === '21plus3') {
+            this.sideBet21Plus3 = amount;
+        }
+        
+        this.updateSideBetsDisplay();
+    }
+    
+    updateSideBetsDisplay() {
+        const total = this.sideBetPP + this.sideBet21Plus3;
+        if (this.sideBetsTotalEl) {
+            this.sideBetsTotalEl.textContent = `$${total}`;
+        }
+    }
+    
+    initializeSideBetButtons() {
+        // Set OFF as active for both side bets
+        document.querySelectorAll('.side-bet-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.amount === '0') {
+                btn.classList.add('active');
+            }
+        });
+        this.updateSideBetsDisplay();
+    }
+    
+    checkPerfectPairs(hand) {
+        if (hand.length < 2) return null;
+        
+        const card1 = hand[0];
+        const card2 = hand[1];
+        
+        // Check if values match (for face cards and 10s, they must be exact match)
+        const value1 = card1.value;
+        const value2 = card2.value;
+        
+        if (value1 !== value2) return null;
+        
+        // Perfect Pair - same suit
+        if (card1.suit === card2.suit) {
+            return {
+                type: 'perfectPair',
+                name: 'PERFECT PAIR',
+                emoji: '👯',
+                payout: this.sideBetPayouts.perfectPair
+            };
+        }
+        
+        // Colored Pair - same color (both red or both black)
+        const redSuits = ['♥', '♦'];
+        const isCard1Red = redSuits.includes(card1.suit);
+        const isCard2Red = redSuits.includes(card2.suit);
+        
+        if (isCard1Red === isCard2Red) {
+            return {
+                type: 'coloredPair',
+                name: 'COLORED PAIR',
+                emoji: '🎨',
+                payout: this.sideBetPayouts.coloredPair
+            };
+        }
+        
+        // Mixed Pair - different colors
+        return {
+            type: 'mixedPair',
+            name: 'MIXED PAIR',
+            emoji: '👫',
+            payout: this.sideBetPayouts.mixedPair
+        };
+    }
+    
+    check21Plus3(playerHand, dealerHand) {
+        if (playerHand.length < 2 || dealerHand.length < 1) return null;
+        
+        const cards = [playerHand[0], playerHand[1], dealerHand[0]];
+        
+        // Get numeric values for straight checking
+        const valueOrder = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const values = cards.map(c => valueOrder.indexOf(c.value));
+        const suits = cards.map(c => c.suit);
+        
+        // Check conditions
+        const allSameSuit = suits[0] === suits[1] && suits[1] === suits[2];
+        const allSameValue = cards[0].value === cards[1].value && cards[1].value === cards[2].value;
+        
+        // Check for straight
+        const sortedValues = [...values].sort((a, b) => a - b);
+        const isSequential = (sortedValues[2] - sortedValues[1] === 1 && sortedValues[1] - sortedValues[0] === 1);
+        // Special case: A-2-3 or Q-K-A
+        const isLowStraight = sortedValues[0] === 0 && sortedValues[1] === 1 && sortedValues[2] === 2;
+        const isHighStraight = sortedValues[0] === 0 && sortedValues[1] === 11 && sortedValues[2] === 12;
+        const isStraight = isSequential || isLowStraight || isHighStraight;
+        
+        // Suited Trips - three of a kind, same suit
+        if (allSameValue && allSameSuit) {
+            return {
+                type: 'suitedTrips',
+                name: 'SUITED TRIPS',
+                emoji: '🔥',
+                payout: this.sideBetPayouts.suitedTrips
+            };
+        }
+        
+        // Straight Flush
+        if (isStraight && allSameSuit) {
+            return {
+                type: 'straightFlush',
+                name: 'STRAIGHT FLUSH',
+                emoji: '🌟',
+                payout: this.sideBetPayouts.straightFlush
+            };
+        }
+        
+        // Three of a Kind
+        if (allSameValue) {
+            return {
+                type: 'threeOfAKind',
+                name: 'THREE OF A KIND',
+                emoji: '🎰',
+                payout: this.sideBetPayouts.threeOfAKind
+            };
+        }
+        
+        // Straight
+        if (isStraight) {
+            return {
+                type: 'straight',
+                name: 'STRAIGHT',
+                emoji: '📈',
+                payout: this.sideBetPayouts.straight
+            };
+        }
+        
+        // Flush
+        if (allSameSuit) {
+            return {
+                type: 'flush',
+                name: 'FLUSH',
+                emoji: '💎',
+                payout: this.sideBetPayouts.flush
+            };
+        }
+        
+        return null;
+    }
+    
+    async evaluateSideBets() {
+        const results = [];
+        let totalWinnings = 0;
+        let anySideBetWon = false;
+        
+        // Calculate side bet bonuses from perks
+        let ppBonus = 1.0;
+        let plus3Bonus = 1.0;
+        
+        if (this.hasSideBetPerk('pairHunter')) ppBonus += 0.25;
+        if (this.hasSideBetPerk('pokerFace')) plus3Bonus += 0.25;
+        if (this.hasSideBetPerk('sideMaster')) {
+            ppBonus += 0.50;
+            plus3Bonus += 0.50;
+        }
+        if (this.hasSideBetPerk('doubleDown21')) {
+            // Extra bonus for straight flush handled below
+        }
+        
+        // Perfect Streak bonus
+        const streakBonus = this.hasSideBetPerk('perfectStreak') ? 
+            1 + (this.sideBetStats.currentStreak * 0.10) : 1;
+        
+        // Check Perfect Pairs
+        if (this.sideBetPP > 0) {
+            const ppResult = this.checkPerfectPairs(this.playerHand);
+            if (ppResult) {
+                let winnings = this.sideBetPP * ppResult.payout * ppBonus * streakBonus;
+                winnings = Math.floor(winnings);
+                totalWinnings += winnings;
+                anySideBetWon = true;
+                results.push({
+                    bet: 'Perfect Pairs',
+                    result: ppResult,
+                    wagered: this.sideBetPP,
+                    won: winnings
+                });
+            } else {
+                results.push({
+                    bet: 'Perfect Pairs',
+                    result: null,
+                    wagered: this.sideBetPP,
+                    won: 0
+                });
+            }
+        }
+        
+        // Check 21+3
+        if (this.sideBet21Plus3 > 0) {
+            const plus3Result = this.check21Plus3(this.playerHand, this.dealerHand);
+            if (plus3Result) {
+                let multiplier = plus3Bonus * streakBonus;
+                // Extra bonus for straight flush with doubleDown21 perk
+                if (this.hasSideBetPerk('doubleDown21') && plus3Result.name === 'Straight Flush') {
+                    multiplier *= 3;
+                }
+                let winnings = this.sideBet21Plus3 * plus3Result.payout * multiplier;
+                winnings = Math.floor(winnings);
+                totalWinnings += winnings;
+                anySideBetWon = true;
+                results.push({
+                    bet: '21+3',
+                    result: plus3Result,
+                    wagered: this.sideBet21Plus3,
+                    won: winnings
+                });
+            } else {
+                results.push({
+                    bet: '21+3',
+                    result: null,
+                    wagered: this.sideBet21Plus3,
+                    won: 0
+                });
+            }
+        }
+        
+        // Side Insurance perk: refund 25% of lost side bets
+        if (this.hasSideBetPerk('sideShow') && !anySideBetWon) {
+            if (Math.random() < 0.25) {
+                const refund = Math.floor((this.sideBetPP + this.sideBet21Plus3) * 1);
+                totalWinnings += refund;
+                this.showMessage(`🎪 Side Show: Side bet refunded! +$${refund}`, 'win');
+            }
+        }
+        
+        // Update side bet stats
+        if (anySideBetWon) {
+            this.sideBetStats.totalWins++;
+            this.sideBetStats.totalEarnings += totalWinnings;
+            this.sideBetStats.currentStreak++;
+            
+            // Check for milestone unlocks
+            this.checkSideBetMilestones();
+        } else if (this.sideBetPP > 0 || this.sideBet21Plus3 > 0) {
+            // Had side bets but lost them all
+            this.sideBetStats.currentStreak = 0;
+        }
+        
+        if (results.length > 0) {
+            this.money += totalWinnings;
+            this.updateDisplay();
+            await this.showSideBetResults(results);
+        }
+    }
+    
+    async showSideBetResults(results) {
+        for (const result of results) {
+            if (result.result) {
+                // Winner! Show popup
+                const popup = document.createElement('div');
+                popup.className = 'side-bet-result win';
+                popup.innerHTML = `
+                    <div class="side-bet-result-title">${result.result.emoji} ${result.bet} WINS!</div>
+                    <div class="side-bet-result-detail">${result.result.name} (${result.result.payout}:1)</div>
+                    <div class="side-bet-result-payout">+$${result.won}</div>
+                `;
+                document.body.appendChild(popup);
+                playWinSound();
+                
+                await this.delay(1500);
+                popup.remove();
+            }
+            // No popup for losses - silently deducted
+>>>>>>> Stashed changes
         }
     }
 
@@ -852,6 +1250,12 @@ class CrackJack {
         this.victoryPopup.classList.add('hidden');
         this.upgradePopup.classList.add('hidden');
         this.bossPopup.classList.add('hidden');
+<<<<<<< Updated upstream
+=======
+        if (this.eventPopup) this.eventPopup.classList.add('hidden');
+        if (this.shopPopup) this.shopPopup.classList.add('hidden');
+        if (this.preRoundShopPopup) this.preRoundShopPopup.classList.add('hidden');
+>>>>>>> Stashed changes
         this.rebetSection.classList.add('hidden');
         this.tableEl.classList.remove('boss-mode');
         this.dealerHandEl.innerHTML = '';
