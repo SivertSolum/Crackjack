@@ -9,6 +9,7 @@ class CrackJack {
         this.playerHand = [];
         this.dealerHand = [];
         this.gameInProgress = false;
+        this.isProcessingAction = false;
         this.handsPlayed = 0;
         this.timesLost = 0;
 
@@ -586,13 +587,18 @@ class CrackJack {
     async hit() {
         if (!this.gameInProgress) return;
         if (this.isPopupOpen()) return;
-
+        if (this.isProcessingAction) return;
+        
+        this.isProcessingAction = true;
+        this.hitBtn.disabled = true;
         this.doubleBtn.disabled = true;
         if (this.splitBtn) this.splitBtn.disabled = true;
         
         // Handle split hands
         if (this.isSplitHand) {
             await this.hitSplitHand();
+            this.isProcessingAction = false;
+            this.hitBtn.disabled = false;
             return;
         }
         
@@ -621,6 +627,8 @@ class CrackJack {
                 this.updateScores(true);
                 this.updateRoguelikeDisplay();
                 this.showMessage("🛡️ Soul Shield saved you from busting!", 'win');
+                this.isProcessingAction = false;
+                this.hitBtn.disabled = false;
                 return;
             }
             
@@ -636,6 +644,10 @@ class CrackJack {
             this.showMessage("21! Let's see the dealer's response...");
             await this.delay(400);
             this.stand();
+        } else {
+            // Re-enable hit button for next action
+            this.isProcessingAction = false;
+            this.hitBtn.disabled = false;
         }
     }
     
@@ -672,6 +684,13 @@ class CrackJack {
 
     async double() {
         if (!this.gameInProgress || this.money < this.currentBet) return;
+        if (this.isPopupOpen()) return;
+        if (this.isProcessingAction) return;
+        
+        this.isProcessingAction = true;
+        this.hitBtn.disabled = true;
+        this.standBtn.disabled = true;
+        this.doubleBtn.disabled = true;
 
         this.money -= this.currentBet;
         this.currentBet *= 2;
@@ -882,6 +901,9 @@ class CrackJack {
     async stand() {
         if (!this.gameInProgress) return;
         if (this.isPopupOpen()) return;
+        if (this.isProcessingAction) return;
+        
+        this.isProcessingAction = true;
 
         // Handle split hands
         if (this.isSplitHand) {
@@ -1447,6 +1469,7 @@ class CrackJack {
         this.hitBtn.disabled = false;
         this.standBtn.disabled = false;
         this.doubleBtn.disabled = false;
+        this.isProcessingAction = false;
         if (this.splitBtn) this.splitBtn.disabled = true;
         document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('selected'));
         this.messageEl.classList.remove('win', 'lose');
