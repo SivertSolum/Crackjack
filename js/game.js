@@ -671,6 +671,10 @@ class CrackJack {
                 this.currentSplitHandIndex = 1;
                 this.renderSplitHands();
                 this.showMessage("Now playing Hand 2...");
+                // Re-enable buttons for hand 2
+                this.hitBtn.disabled = false;
+                this.standBtn.disabled = false;
+                this.isProcessingAction = false;
             } else {
                 // Both hands done, resolve
                 await this.resolveSplitHands();
@@ -1342,6 +1346,7 @@ class CrackJack {
     
     renderSplitHands(animateHandIndex = -1) {
         this.playerHandEl.innerHTML = '';
+        this.playerHandEl.classList.add('split-mode');
         
         this.splitHands.forEach((hand, handIndex) => {
             const handContainer = document.createElement('div');
@@ -1378,6 +1383,10 @@ class CrackJack {
             this.currentSplitHandIndex = 1;
             this.renderSplitHands();
             this.showMessage("Now playing Hand 2...");
+            // Re-enable buttons for hand 2
+            this.hitBtn.disabled = false;
+            this.standBtn.disabled = false;
+            this.isProcessingAction = false;
         } else {
             // Both hands done, resolve against dealer
             await this.resolveSplitHands();
@@ -1476,6 +1485,7 @@ class CrackJack {
         
         this.dealerHandEl.innerHTML = '';
         this.playerHandEl.innerHTML = '';
+        this.playerHandEl.classList.remove('split-mode');
         this.dealerScoreEl.textContent = '';
         this.playerScoreEl.textContent = '';
         this.clearScoreboard();

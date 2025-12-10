@@ -1428,11 +1428,12 @@ header h1 {
 }
 
 /* Split hands display */
-.split-hands-container {
+#player-hand.split-mode {
     display: flex;
+    flex-direction: row;
     gap: 20px;
     justify-content: center;
-    flex-wrap: wrap;
+    align-items: flex-start;
 }
 
 .split-hand {
@@ -1440,8 +1441,11 @@ header h1 {
     border: 2px solid #666;
     border-radius: 10px;
     padding: 10px;
-    min-width: 150px;
+    min-width: 120px;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .split-hand.active {
@@ -1454,17 +1458,23 @@ header h1 {
 }
 
 .split-hand-label {
-    font-size: 0.7rem;
-    color: #aaa;
-    margin-bottom: 5px;
+    font-size: 0.6rem;
+    color: #ffd700;
+    margin-bottom: 8px;
     text-align: center;
+    font-family: 'Press Start 2P', monospace;
 }
 
-.split-hand-cards {
+.split-cards {
     display: flex;
+    flex-direction: row;
     justify-content: center;
     gap: 5px;
     min-height: 80px;
+}
+
+.split-hand .card {
+    transform: scale(0.85);
 }
 
 .split-hand-score {
