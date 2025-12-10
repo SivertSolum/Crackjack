@@ -8,16 +8,8 @@ function showMainMenu() {
     document.getElementById('scoreboard').classList.add('hidden');
     const cardTracker = document.getElementById('card-tracker');
     if (cardTracker) cardTracker.classList.add('hidden');
-<<<<<<< Updated upstream
-    const resetBtn = document.getElementById('reset-btn');
-    if (resetBtn) resetBtn.classList.add('hidden');
-=======
     const topLeftBtns = document.getElementById('top-left-buttons');
     if (topLeftBtns) topLeftBtns.classList.add('hidden');
-    
-    // Update version number display
-    updateVersionDisplay();
->>>>>>> Stashed changes
 }
 
 function hideMainMenu() {

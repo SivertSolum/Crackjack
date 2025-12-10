@@ -92,8 +92,6 @@ class CrackJack {
         this.deckCountEl = document.getElementById('deck-count');
         this.shuffleOverlay = document.getElementById('shuffle-overlay');
         this.cardTrackerEl = document.getElementById('card-tracker');
-<<<<<<< Updated upstream
-=======
         
         // New roguelike elements
         this.eventPopup = document.getElementById('event-popup');
@@ -115,15 +113,12 @@ class CrackJack {
         if (this.preRoundShopPopup) {
             this.preRoundShopPopup.classList.add('hidden');
         }
->>>>>>> Stashed changes
     }
 
     bindEvents() {
         document.querySelectorAll('.bet-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.placeBet(e.target.closest('.bet-btn')));
         });
-<<<<<<< Updated upstream
-=======
         
         // Pre-round shop
         if (this.preRoundShopBtn) {
@@ -144,7 +139,6 @@ class CrackJack {
                 content.addEventListener('click', (e) => e.stopPropagation());
             }
         });
->>>>>>> Stashed changes
 
         this.dealBtn.addEventListener('click', () => this.deal());
         this.hitBtn.addEventListener('click', () => this.hit());
@@ -425,14 +419,11 @@ class CrackJack {
     }
 
     async deal() {
-<<<<<<< Updated upstream
-        if (this.currentBet <= 0 || this.currentBet > this.money) return;
-=======
         // Don't deal if a popup is open
         if (this.isPopupOpen()) return;
         
         // Lucky Start perk: free $10 side bet each hand (randomly PP or 21+3)
-        if (this.hasSideBetPerk('luckyStart')) {
+        if (this.hasSideBetPerk && this.hasSideBetPerk('luckyStart')) {
             if (this.sideBetPP === 0 && this.sideBet21Plus3 === 0) {
                 // Add free side bet if player hasn't placed any
                 if (Math.random() < 0.5) {
@@ -442,16 +433,16 @@ class CrackJack {
                     this.sideBet21Plus3 = 10;
                     this.showMessage("🌟 Lucky Start: Free $10 21+3 bet!");
                 }
-                this.updateSideBetsDisplay();
+                if (this.updateSideBetsDisplay) this.updateSideBetsDisplay();
             }
         }
         
         // Calculate total bet including side bets
-        let totalSideBets = this.sideBetPP + this.sideBet21Plus3;
+        let totalSideBets = (this.sideBetPP || 0) + (this.sideBet21Plus3 || 0);
         
         // Side Insurance perk: 20% off side bets
         let sideBetDiscount = 0;
-        if (this.hasSideBetPerk('sideInsurance') && totalSideBets > 0) {
+        if (this.hasSideBetPerk && this.hasSideBetPerk('sideInsurance') && totalSideBets > 0) {
             sideBetDiscount = Math.floor(totalSideBets * 0.2);
             totalSideBets -= sideBetDiscount;
         }
@@ -461,7 +452,7 @@ class CrackJack {
         if (this.currentBet <= 0 || totalRequired > this.money) return;
 
         // Apply per-hand costs (curses)
-        if (this.hasCurse('heavyDebt')) {
+        if (this.hasCurse && this.hasCurse('heavyDebt')) {
             const cost = 25;
             this.money -= cost;
             this.showMessage(`💸 Heavy Debt: -$${cost}`);
@@ -469,12 +460,11 @@ class CrackJack {
         }
         
         // Zen Mind perk: gain money at start of hand
-        if (this.hasPerk('meditation')) {
+        if (this.hasPerk && this.hasPerk('meditation')) {
             this.money += 30;
             this.showMessage("🧘 Zen Mind: +$30");
             this.updateDisplay();
         }
->>>>>>> Stashed changes
 
         await this.checkAndReshuffle();
 
@@ -625,10 +615,7 @@ class CrackJack {
             this.addToHistory(score, dealerScore, 'loss');
             this.endRound(false);
         } else {
-<<<<<<< Updated upstream
-            await this.stand();
-=======
-            playChipSound();
+            if (typeof playChipSound === 'function') playChipSound();
             this.showMessage(`✂️ Split Results: Break even. ${resultsMessage}`);
             this.endRound(null);
         }
@@ -645,7 +632,9 @@ class CrackJack {
         
         // Deselect other buttons of the same type
         const container = type === 'pp' ? document.getElementById('pp-buttons') : document.getElementById('21plus3-buttons');
-        container.querySelectorAll('.side-bet-btn').forEach(b => b.classList.remove('active'));
+        if (container) {
+            container.querySelectorAll('.side-bet-btn').forEach(b => b.classList.remove('active'));
+        }
         btn.classList.add('active');
         
         // Set the bet
@@ -659,7 +648,7 @@ class CrackJack {
     }
     
     updateSideBetsDisplay() {
-        const total = this.sideBetPP + this.sideBet21Plus3;
+        const total = (this.sideBetPP || 0) + (this.sideBet21Plus3 || 0);
         if (this.sideBetsTotalEl) {
             this.sideBetsTotalEl.textContent = `$${total}`;
         }
@@ -682,216 +671,102 @@ class CrackJack {
         const card1 = hand[0];
         const card2 = hand[1];
         
-        // Check if values match (for face cards and 10s, they must be exact match)
         const value1 = card1.value;
         const value2 = card2.value;
         
         if (value1 !== value2) return null;
         
-        // Perfect Pair - same suit
         if (card1.suit === card2.suit) {
-            return {
-                type: 'perfectPair',
-                name: 'PERFECT PAIR',
-                emoji: '👯',
-                payout: this.sideBetPayouts.perfectPair
-            };
+            return { type: 'perfectPair', name: 'PERFECT PAIR', emoji: '👯', payout: this.sideBetPayouts.perfectPair };
         }
         
-        // Colored Pair - same color (both red or both black)
         const redSuits = ['♥', '♦'];
         const isCard1Red = redSuits.includes(card1.suit);
         const isCard2Red = redSuits.includes(card2.suit);
         
         if (isCard1Red === isCard2Red) {
-            return {
-                type: 'coloredPair',
-                name: 'COLORED PAIR',
-                emoji: '🎨',
-                payout: this.sideBetPayouts.coloredPair
-            };
+            return { type: 'coloredPair', name: 'COLORED PAIR', emoji: '🎨', payout: this.sideBetPayouts.coloredPair };
         }
         
-        // Mixed Pair - different colors
-        return {
-            type: 'mixedPair',
-            name: 'MIXED PAIR',
-            emoji: '👫',
-            payout: this.sideBetPayouts.mixedPair
-        };
+        return { type: 'mixedPair', name: 'MIXED PAIR', emoji: '👫', payout: this.sideBetPayouts.mixedPair };
     }
     
     check21Plus3(playerHand, dealerHand) {
         if (playerHand.length < 2 || dealerHand.length < 1) return null;
         
         const cards = [playerHand[0], playerHand[1], dealerHand[0]];
-        
-        // Get numeric values for straight checking
         const valueOrder = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         const values = cards.map(c => valueOrder.indexOf(c.value));
         const suits = cards.map(c => c.suit);
         
-        // Check conditions
         const allSameSuit = suits[0] === suits[1] && suits[1] === suits[2];
         const allSameValue = cards[0].value === cards[1].value && cards[1].value === cards[2].value;
         
-        // Check for straight
         const sortedValues = [...values].sort((a, b) => a - b);
         const isSequential = (sortedValues[2] - sortedValues[1] === 1 && sortedValues[1] - sortedValues[0] === 1);
-        // Special case: A-2-3 or Q-K-A
         const isLowStraight = sortedValues[0] === 0 && sortedValues[1] === 1 && sortedValues[2] === 2;
         const isHighStraight = sortedValues[0] === 0 && sortedValues[1] === 11 && sortedValues[2] === 12;
         const isStraight = isSequential || isLowStraight || isHighStraight;
         
-        // Suited Trips - three of a kind, same suit
-        if (allSameValue && allSameSuit) {
-            return {
-                type: 'suitedTrips',
-                name: 'SUITED TRIPS',
-                emoji: '🔥',
-                payout: this.sideBetPayouts.suitedTrips
-            };
-        }
-        
-        // Straight Flush
-        if (isStraight && allSameSuit) {
-            return {
-                type: 'straightFlush',
-                name: 'STRAIGHT FLUSH',
-                emoji: '🌟',
-                payout: this.sideBetPayouts.straightFlush
-            };
-        }
-        
-        // Three of a Kind
-        if (allSameValue) {
-            return {
-                type: 'threeOfAKind',
-                name: 'THREE OF A KIND',
-                emoji: '🎰',
-                payout: this.sideBetPayouts.threeOfAKind
-            };
-        }
-        
-        // Straight
-        if (isStraight) {
-            return {
-                type: 'straight',
-                name: 'STRAIGHT',
-                emoji: '📈',
-                payout: this.sideBetPayouts.straight
-            };
-        }
-        
-        // Flush
-        if (allSameSuit) {
-            return {
-                type: 'flush',
-                name: 'FLUSH',
-                emoji: '💎',
-                payout: this.sideBetPayouts.flush
-            };
-        }
+        if (allSameValue && allSameSuit) return { type: 'suitedTrips', name: 'SUITED TRIPS', emoji: '🔥', payout: this.sideBetPayouts.suitedTrips };
+        if (isStraight && allSameSuit) return { type: 'straightFlush', name: 'STRAIGHT FLUSH', emoji: '🌟', payout: this.sideBetPayouts.straightFlush };
+        if (allSameValue) return { type: 'threeOfAKind', name: 'THREE OF A KIND', emoji: '🎰', payout: this.sideBetPayouts.threeOfAKind };
+        if (isStraight) return { type: 'straight', name: 'STRAIGHT', emoji: '📈', payout: this.sideBetPayouts.straight };
+        if (allSameSuit) return { type: 'flush', name: 'FLUSH', emoji: '💎', payout: this.sideBetPayouts.flush };
         
         return null;
     }
     
     async evaluateSideBets() {
+        if (!this.sideBetPP && !this.sideBet21Plus3) return;
+        
         const results = [];
         let totalWinnings = 0;
         let anySideBetWon = false;
         
-        // Calculate side bet bonuses from perks
-        let ppBonus = 1.0;
-        let plus3Bonus = 1.0;
+        let ppBonus = 1.0, plus3Bonus = 1.0;
+        if (this.hasSideBetPerk && this.hasSideBetPerk('pairHunter')) ppBonus += 0.25;
+        if (this.hasSideBetPerk && this.hasSideBetPerk('pokerFace')) plus3Bonus += 0.25;
+        if (this.hasSideBetPerk && this.hasSideBetPerk('sideMaster')) { ppBonus += 0.50; plus3Bonus += 0.50; }
         
-        if (this.hasSideBetPerk('pairHunter')) ppBonus += 0.25;
-        if (this.hasSideBetPerk('pokerFace')) plus3Bonus += 0.25;
-        if (this.hasSideBetPerk('sideMaster')) {
-            ppBonus += 0.50;
-            plus3Bonus += 0.50;
-        }
-        if (this.hasSideBetPerk('doubleDown21')) {
-            // Extra bonus for straight flush handled below
-        }
-        
-        // Perfect Streak bonus
-        const streakBonus = this.hasSideBetPerk('perfectStreak') ? 
+        const streakBonus = (this.hasSideBetPerk && this.hasSideBetPerk('perfectStreak') && this.sideBetStats) ? 
             1 + (this.sideBetStats.currentStreak * 0.10) : 1;
         
-        // Check Perfect Pairs
         if (this.sideBetPP > 0) {
             const ppResult = this.checkPerfectPairs(this.playerHand);
             if (ppResult) {
-                let winnings = this.sideBetPP * ppResult.payout * ppBonus * streakBonus;
-                winnings = Math.floor(winnings);
+                let winnings = Math.floor(this.sideBetPP * ppResult.payout * ppBonus * streakBonus);
                 totalWinnings += winnings;
                 anySideBetWon = true;
-                results.push({
-                    bet: 'Perfect Pairs',
-                    result: ppResult,
-                    wagered: this.sideBetPP,
-                    won: winnings
-                });
+                results.push({ bet: 'Perfect Pairs', result: ppResult, wagered: this.sideBetPP, won: winnings });
             } else {
-                results.push({
-                    bet: 'Perfect Pairs',
-                    result: null,
-                    wagered: this.sideBetPP,
-                    won: 0
-                });
+                results.push({ bet: 'Perfect Pairs', result: null, wagered: this.sideBetPP, won: 0 });
             }
         }
         
-        // Check 21+3
         if (this.sideBet21Plus3 > 0) {
             const plus3Result = this.check21Plus3(this.playerHand, this.dealerHand);
             if (plus3Result) {
                 let multiplier = plus3Bonus * streakBonus;
-                // Extra bonus for straight flush with doubleDown21 perk
-                if (this.hasSideBetPerk('doubleDown21') && plus3Result.name === 'Straight Flush') {
-                    multiplier *= 3;
-                }
-                let winnings = this.sideBet21Plus3 * plus3Result.payout * multiplier;
-                winnings = Math.floor(winnings);
+                if (this.hasSideBetPerk && this.hasSideBetPerk('doubleDown21') && plus3Result.name === 'Straight Flush') multiplier *= 3;
+                let winnings = Math.floor(this.sideBet21Plus3 * plus3Result.payout * multiplier);
                 totalWinnings += winnings;
                 anySideBetWon = true;
-                results.push({
-                    bet: '21+3',
-                    result: plus3Result,
-                    wagered: this.sideBet21Plus3,
-                    won: winnings
-                });
+                results.push({ bet: '21+3', result: plus3Result, wagered: this.sideBet21Plus3, won: winnings });
             } else {
-                results.push({
-                    bet: '21+3',
-                    result: null,
-                    wagered: this.sideBet21Plus3,
-                    won: 0
-                });
+                results.push({ bet: '21+3', result: null, wagered: this.sideBet21Plus3, won: 0 });
             }
         }
         
-        // Side Insurance perk: refund 25% of lost side bets
-        if (this.hasSideBetPerk('sideShow') && !anySideBetWon) {
-            if (Math.random() < 0.25) {
-                const refund = Math.floor((this.sideBetPP + this.sideBet21Plus3) * 1);
-                totalWinnings += refund;
-                this.showMessage(`🎪 Side Show: Side bet refunded! +$${refund}`, 'win');
+        if (this.sideBetStats) {
+            if (anySideBetWon) {
+                this.sideBetStats.totalWins++;
+                this.sideBetStats.totalEarnings += totalWinnings;
+                this.sideBetStats.currentStreak++;
+                if (this.checkSideBetMilestones) this.checkSideBetMilestones();
+            } else {
+                this.sideBetStats.currentStreak = 0;
             }
-        }
-        
-        // Update side bet stats
-        if (anySideBetWon) {
-            this.sideBetStats.totalWins++;
-            this.sideBetStats.totalEarnings += totalWinnings;
-            this.sideBetStats.currentStreak++;
-            
-            // Check for milestone unlocks
-            this.checkSideBetMilestones();
-        } else if (this.sideBetPP > 0 || this.sideBet21Plus3 > 0) {
-            // Had side bets but lost them all
-            this.sideBetStats.currentStreak = 0;
         }
         
         if (results.length > 0) {
@@ -904,7 +779,6 @@ class CrackJack {
     async showSideBetResults(results) {
         for (const result of results) {
             if (result.result) {
-                // Winner! Show popup
                 const popup = document.createElement('div');
                 popup.className = 'side-bet-result win';
                 popup.innerHTML = `
@@ -913,13 +787,11 @@ class CrackJack {
                     <div class="side-bet-result-payout">+$${result.won}</div>
                 `;
                 document.body.appendChild(popup);
-                playWinSound();
+                if (typeof playWinSound === 'function') playWinSound();
                 
                 await this.delay(1500);
                 popup.remove();
             }
-            // No popup for losses - silently deducted
->>>>>>> Stashed changes
         }
     }
 
@@ -1250,12 +1122,9 @@ class CrackJack {
         this.victoryPopup.classList.add('hidden');
         this.upgradePopup.classList.add('hidden');
         this.bossPopup.classList.add('hidden');
-<<<<<<< Updated upstream
-=======
         if (this.eventPopup) this.eventPopup.classList.add('hidden');
         if (this.shopPopup) this.shopPopup.classList.add('hidden');
         if (this.preRoundShopPopup) this.preRoundShopPopup.classList.add('hidden');
->>>>>>> Stashed changes
         this.rebetSection.classList.add('hidden');
         this.tableEl.classList.remove('boss-mode');
         this.dealerHandEl.innerHTML = '';
