@@ -60,6 +60,12 @@ class CrackJack {
         this.hitBtn = document.getElementById('hit-btn');
         this.standBtn = document.getElementById('stand-btn');
         this.doubleBtn = document.getElementById('double-btn');
+        this.splitBtn = document.getElementById('split-btn');
+        
+        // Side bets elements
+        this.sideBetsSection = document.getElementById('side-bets-section');
+        this.sideBetsTotalEl = document.getElementById('side-bets-total');
+        
         this.brokePopup = document.getElementById('broke-popup');
         this.brokeMessageEl = document.getElementById('broke-message');
         this.restartBtn = document.getElementById('restart-btn');
@@ -144,10 +150,16 @@ class CrackJack {
         this.hitBtn.addEventListener('click', () => this.hit());
         this.standBtn.addEventListener('click', () => this.stand());
         this.doubleBtn.addEventListener('click', () => this.double());
+        if (this.splitBtn) this.splitBtn.addEventListener('click', () => this.split());
         this.restartBtn.addEventListener('click', () => this.restart());
         this.sameBetBtn.addEventListener('click', () => this.sameBet());
         this.bossFightBtn.addEventListener('click', () => this.startBossFight());
         this.victoryRestartBtn.addEventListener('click', () => this.restart());
+        
+        // Side bet buttons
+        document.querySelectorAll('.side-bet-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.placeSideBet(e.target));
+        });
     }
 
     // === DECK MANAGEMENT ===

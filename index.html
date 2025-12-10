@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRACKJACK - The World's Most Fair Casino™</title>
-    <link rel="stylesheet" href="style.css?v=20">
+    <link rel="stylesheet" href="style.css?v=21">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -339,6 +339,31 @@
                     <span class="rebet-or">or change bet ↓</span>
                 </div>
                 
+                <div class="side-bets-and-rebet-container">
+                    <!-- Side Bets Section -->
+                    <div class="side-bets-section" id="side-bets-section">
+                        <div class="side-bet-option">
+                            <label class="side-bet-label">👫 PP <span class="side-bet-info" title="Perfect Pairs: Win if your first two cards are a pair!">ⓘ</span></label>
+                            <div class="side-bet-buttons" id="pp-buttons">
+                                <button class="side-bet-btn active" data-type="pp" data-amount="0">OFF</button>
+                                <button class="side-bet-btn" data-type="pp" data-amount="10">$10</button>
+                                <button class="side-bet-btn" data-type="pp" data-amount="25">$25</button>
+                                <button class="side-bet-btn" data-type="pp" data-amount="50">$50</button>
+                            </div>
+                        </div>
+                        <div class="side-bet-option">
+                            <label class="side-bet-label">🃏 21+3 <span class="side-bet-info" title="21+3: Win if your cards + dealer upcard make poker hand!">ⓘ</span></label>
+                            <div class="side-bet-buttons" id="21plus3-buttons">
+                                <button class="side-bet-btn active" data-type="21plus3" data-amount="0">OFF</button>
+                                <button class="side-bet-btn" data-type="21plus3" data-amount="10">$10</button>
+                                <button class="side-bet-btn" data-type="21plus3" data-amount="25">$25</button>
+                                <button class="side-bet-btn" data-type="21plus3" data-amount="50">$50</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="side-bets-total">Side: <span id="side-bets-total">$0</span></div>
+                </div>
+                
                 <div class="bet-buttons">
                     <button class="bet-btn" data-amount="10">$10<br><span class="subtext">(Coward)</span></button>
                     <button class="bet-btn" data-amount="50">$50<br><span class="subtext">(Meh)</span></button>
@@ -347,6 +372,7 @@
                     <button class="bet-btn all-in" data-amount="all">ALL IN<br><span class="subtext">(Legend)</span></button>
                 </div>
                 <div class="current-bet">
+                    <button class="shop-btn" id="pre-round-shop-btn">🛒 SHOP</button>
                     Current Bet: <span id="current-bet">$0</span>
                     <button class="deal-btn" id="deal-btn" disabled>DEAL ME IN</button>
                 </div>
@@ -361,6 +387,9 @@
                 </button>
                 <button class="action-btn double-btn" id="double-btn">
                     💸 DOUBLE<br><span class="subtext">(Lmao)</span>
+                </button>
+                <button class="action-btn split-btn" id="split-btn" disabled>
+                    ✂️ SPLIT<br><span class="subtext">(Risky)</span>
                 </button>
             </div>
         </div>
@@ -444,6 +473,30 @@
         </div>
     </div>
 
+    <!-- Pre-Round Shop Popup -->
+    <div class="popup hidden" id="pre-round-shop-popup">
+        <div class="popup-content pre-round-shop-content">
+            <h2>🛒 PERK SHOP</h2>
+            <p class="shop-money">Your money: <span class="gold" id="pre-round-shop-money">$1000</span></p>
+            <p class="shop-info">Purchase power-ups to help your run!</p>
+            <div class="pre-round-shop-items" id="pre-round-shop-items"></div>
+            <div class="shop-active-perks">
+                <h3>Active Perks:</h3>
+                <div id="shop-active-perks-list">None yet...</div>
+            </div>
+            <button class="shop-close-btn menu-btn" id="pre-round-shop-close">✖ CLOSE SHOP</button>
+        </div>
+    </div>
+
+    <!-- Upgrade Selection Popup -->
+    <div class="popup hidden" id="upgrade-popup">
+        <div class="popup-content upgrade-content">
+            <h2>🎁 CHOOSE YOUR REWARD!</h2>
+            <p class="upgrade-subtitle">You've won 3 in a row! Pick a perk:</p>
+            <div class="upgrade-options" id="upgrade-options"></div>
+        </div>
+    </div>
+
     <!-- Boss Announcement Popup -->
     <div class="popup hidden" id="boss-popup">
         <div class="popup-content boss-content">
@@ -477,7 +530,7 @@
     <script src="js/config.js?v=20"></script>
     <script src="js/audio.js?v=20"></script>
     <script src="js/ui.js?v=20"></script>
-    <script src="js/game.js?v=20"></script>
+    <script src="js/game.js?v=21"></script>
     <script src="js/main.js?v=20"></script>
 </body>
 </html>
