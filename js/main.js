@@ -57,6 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Menu button
+    const menuBtn = document.getElementById('menu-btn');
+    if (menuBtn) {
+        menuBtn.addEventListener('click', backToMenu);
+    }
+    
     console.log('%c🎰 CRACKJACK LOADED 🎰', 'font-size: 24px; color: gold; background: purple;');
     console.log('%cNow with MORE ways to lose!', 'font-size: 12px; color: red;');
 });
