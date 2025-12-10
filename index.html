@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>CRACKJACK - The World's Most Fair Casino™</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=13">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -27,8 +27,11 @@
         </div>
     </div>
     
-    <!-- Reset Button (Top Left) -->
-    <button class="reset-btn hidden" id="reset-btn" title="Restart Game">🔄 RESET</button>
+    <!-- Top Left Buttons -->
+    <div class="top-left-buttons hidden" id="top-left-buttons">
+        <button class="menu-back-btn" id="menu-btn" title="Back to Menu">🏠 MENU</button>
+        <button class="reset-btn" id="reset-btn" title="Restart Game">🔄 RESET</button>
+    </div>
     
     <!-- Card Tracker (Left Side) -->
     <div class="card-tracker hidden" id="card-tracker">
@@ -113,19 +116,30 @@
             <div class="menu-logo">
                 <h1 class="menu-title">CRACKJACK</h1>
                 <p class="menu-subtitle">"Definitely Not Rigged"™</p>
-                <div class="menu-satan-sprite">
-                    <div class="menu-horns">
-                        <div class="menu-horn left"></div>
-                        <div class="menu-horn right"></div>
-                    </div>
-                    <div class="menu-satan-head">
-                        <div class="menu-satan-eyes">
-                            <div class="menu-eye left"><div class="menu-pupil"></div></div>
-                            <div class="menu-eye right"><div class="menu-pupil"></div></div>
+                <div class="menu-dealer-icon">
+                    <div class="satan-container menu-size">
+                        <div class="satan">
+                            <div class="horns">
+                                <div class="horn left"></div>
+                                <div class="horn right"></div>
+                            </div>
+                            <div class="satan-head">
+                                <div class="satan-eyes">
+                                    <div class="eye left"><div class="pupil"></div></div>
+                                    <div class="eye right"><div class="pupil"></div></div>
+                                </div>
+                                <div class="satan-nose"></div>
+                                <div class="satan-mouth">
+                                    <div class="fang left"></div>
+                                    <div class="fang right"></div>
+                                </div>
+                            </div>
+                            <div class="goatee"></div>
                         </div>
-                        <div class="menu-satan-mouth">
-                            <div class="menu-fang left"></div>
-                            <div class="menu-fang right"></div>
+                        <div class="flames menu-flames">
+                            <div class="flame f1"></div>
+                            <div class="flame f2"></div>
+                            <div class="flame f3"></div>
                         </div>
                     </div>
                 </div>
@@ -318,12 +332,45 @@
 
         <div class="controls">
             <div class="betting-controls" id="betting-controls">
-                <!-- Quick Rebet Section (shown after first hand) -->
-                <div class="rebet-section hidden" id="rebet-section">
-                    <button class="rebet-btn" id="same-bet-btn">
-                        🔄 SAME BET<br><span class="rebet-amount" id="rebet-amount">$100</span>
-                    </button>
-                    <span class="rebet-or">or change bet ↓</span>
+                <!-- Side Bets + Rebet Combined Row -->
+                <div class="side-rebet-row">
+                    <!-- Quick Rebet Section -->
+                    <div class="rebet-section hidden" id="rebet-section">
+                        <button class="rebet-btn" id="same-bet-btn">
+                            🔄 SAME BET<br><span class="rebet-amount" id="rebet-amount">$100</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Side Bets Section -->
+                    <div class="side-bets-section" id="side-bets-section">
+                        <div class="side-bet-option">
+                            <label class="side-bet-label">
+                                <span class="side-bet-name">👫 PP</span>
+                                <span class="side-bet-info" title="Perfect Pairs: Win if your first 2 cards are a pair!&#10;Perfect Pair (same suit): 25:1&#10;Colored Pair (same color): 12:1&#10;Mixed Pair: 5:1">ⓘ</span>
+                            </label>
+                            <div class="side-bet-buttons" id="pp-buttons">
+                                <button class="side-bet-btn" data-type="pp" data-amount="0">OFF</button>
+                                <button class="side-bet-btn" data-type="pp" data-amount="10">$10</button>
+                                <button class="side-bet-btn" data-type="pp" data-amount="25">$25</button>
+                                <button class="side-bet-btn" data-type="pp" data-amount="50">$50</button>
+                            </div>
+                        </div>
+                        <div class="side-bet-option">
+                            <label class="side-bet-label">
+                                <span class="side-bet-name">🃏 21+3</span>
+                                <span class="side-bet-info" title="Your 2 cards + dealer's up card make a poker hand!&#10;Suited Trips: 100:1&#10;Straight Flush: 40:1&#10;Three of a Kind: 30:1&#10;Straight: 10:1&#10;Flush: 5:1">ⓘ</span>
+                            </label>
+                            <div class="side-bet-buttons" id="21plus3-buttons">
+                                <button class="side-bet-btn" data-type="21plus3" data-amount="0">OFF</button>
+                                <button class="side-bet-btn" data-type="21plus3" data-amount="10">$10</button>
+                                <button class="side-bet-btn" data-type="21plus3" data-amount="25">$25</button>
+                                <button class="side-bet-btn" data-type="21plus3" data-amount="50">$50</button>
+                            </div>
+                        </div>
+                        <div class="side-bets-total">
+                            Side: <span id="side-bets-total">$0</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="bet-buttons">
@@ -334,6 +381,7 @@
                     <button class="bet-btn all-in" data-amount="all">ALL IN<br><span class="subtext">(Legend)</span></button>
                 </div>
                 <div class="current-bet">
+                    <button class="shop-btn" id="pre-round-shop-btn">🛒 SHOP</button>
                     Current Bet: <span id="current-bet">$0</span>
                     <button class="deal-btn" id="deal-btn" disabled>DEAL ME IN</button>
                 </div>
@@ -349,6 +397,9 @@
                 <button class="action-btn double-btn" id="double-btn">
                     💸 DOUBLE<br><span class="subtext">(Lmao)</span>
                 </button>
+                <button class="action-btn split-btn" id="split-btn" disabled>
+                    ✂️ SPLIT<br><span class="subtext">(Risky)</span>
+                </button>
             </div>
         </div>
 
@@ -358,8 +409,8 @@
                 <span class="stat-value" id="current-floor">1</span>
             </div>
             <div class="stat">
-                <span class="stat-label">Wins:</span>
-                <span class="stat-value" id="win-streak">0</span>/<span class="stat-value" id="wins-needed">3</span>
+                <span class="stat-label">Streak:</span>
+                <span class="stat-value" id="win-streak">0</span>
             </div>
             <div class="stat">
                 <span class="stat-label">Goal:</span>
@@ -367,10 +418,15 @@
             </div>
         </div>
 
-        <!-- Active Upgrades Display -->
+        <!-- Active Perks & Relics Display -->
         <div class="upgrades-bar" id="upgrades-bar">
-            <span class="upgrades-label">🎭 Perks:</span>
+            <span class="upgrades-label">🎭 Perks/Relics:</span>
             <div class="active-upgrades" id="active-upgrades">None yet...</div>
+        </div>
+
+        <!-- Active Curses Display -->
+        <div class="curses-bar hidden" id="curses-display">
+            <span class="curses-label">💀 Curses:</span>
         </div>
 
     </div>
@@ -380,15 +436,22 @@
         <h3>📊 SCOREBOARD</h3>
         <div class="scoreboard-entry dealer-entry">
             <div class="scoreboard-icon">
-                <div class="mini-satan-sprite">
-                    <div class="mini-horns">
-                        <div class="mini-horn left"></div>
-                        <div class="mini-horn right"></div>
-                    </div>
-                    <div class="mini-satan-head">
-                        <div class="mini-satan-eyes">
-                            <div class="mini-eye left"></div>
-                            <div class="mini-eye right"></div>
+                <div class="satan-container scoreboard-size">
+                    <div class="satan">
+                        <div class="horns">
+                            <div class="horn left"></div>
+                            <div class="horn right"></div>
+                        </div>
+                        <div class="satan-head">
+                            <div class="satan-eyes">
+                                <div class="eye left"><div class="pupil"></div></div>
+                                <div class="eye right"><div class="pupil"></div></div>
+                            </div>
+                            <div class="satan-nose"></div>
+                            <div class="satan-mouth">
+                                <div class="fang left"></div>
+                                <div class="fang right"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -401,13 +464,29 @@
         <div class="scoreboard-vs">VS</div>
         <div class="scoreboard-entry player-entry">
             <div class="scoreboard-icon">
-                <div class="mini-loser-sprite">
-                    <div class="mini-loser-head">
-                        <div class="mini-loser-eyes">
-                            <div class="mini-loser-eye left"></div>
-                            <div class="mini-loser-eye right"></div>
+                <div class="loser-container scoreboard-size">
+                    <div class="loser">
+                        <div class="loser-hair">
+                            <div class="hair-strand s1"></div>
+                            <div class="hair-strand s2"></div>
+                            <div class="hair-strand s3"></div>
+                            <div class="bald-spot"></div>
                         </div>
-                        <div class="mini-loser-mouth"></div>
+                        <div class="loser-head">
+                            <div class="sweat-drops">
+                                <div class="sweat s1"></div>
+                                <div class="sweat s2"></div>
+                                <div class="sweat s3"></div>
+                            </div>
+                            <div class="loser-eyes">
+                                <div class="eye-bag left"></div>
+                                <div class="eye-bag right"></div>
+                                <div class="loser-eye left"><div class="loser-pupil"></div></div>
+                                <div class="loser-eye right"><div class="loser-pupil"></div></div>
+                            </div>
+                            <div class="loser-nose"></div>
+                            <div class="loser-mouth"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -428,6 +507,43 @@
             <h2>🎁 CHOOSE YOUR PERK 🎁</h2>
             <p class="upgrade-subtitle">You survived! Pick a reward:</p>
             <div class="upgrade-options" id="upgrade-options"></div>
+        </div>
+    </div>
+
+    <!-- Event Popup -->
+    <div class="popup hidden" id="event-popup">
+        <div class="popup-content event-content">
+            <div class="event-header">
+                <span class="event-icon">❓</span>
+                <h2 class="event-title">Event</h2>
+            </div>
+            <p class="event-desc">Something happens...</p>
+            <div class="event-choices"></div>
+        </div>
+    </div>
+
+    <!-- Shop Popup -->
+    <div class="popup hidden" id="shop-popup">
+        <div class="popup-content shop-content">
+            <h2>🛒 SHOP</h2>
+            <p class="shop-money">Your money: <span class="gold">$1000</span></p>
+            <div class="shop-items"></div>
+            <button class="shop-leave-btn menu-btn">Leave Shop</button>
+        </div>
+    </div>
+
+    <!-- Pre-Round Shop Popup -->
+    <div class="popup hidden" id="pre-round-shop-popup">
+        <div class="popup-content pre-round-shop-content">
+            <h2>🛒 PERK SHOP</h2>
+            <p class="shop-money">Your money: <span class="gold" id="pre-round-shop-money">$1000</span></p>
+            <p class="shop-info">Purchase power-ups to help your run!</p>
+            <div class="pre-round-shop-items" id="pre-round-shop-items"></div>
+            <div class="shop-active-perks">
+                <h3>Active Perks:</h3>
+                <div id="shop-active-perks-list">None yet...</div>
+            </div>
+            <button class="shop-close-btn menu-btn" id="pre-round-shop-close">✖ CLOSE SHOP</button>
         </div>
     </div>
 
@@ -461,11 +577,20 @@
     </div>
 
     <!-- Modular JavaScript -->
-    <script src="js/config.js"></script>
-    <script src="js/audio.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/game.js"></script>
-    <script src="js/main.js"></script>
+    <!-- Configuration & Data -->
+    <script src="js/config.js?v=14"></script>
+    
+    <!-- Audio System -->
+    <script src="js/audio.js?v=9"></script>
+    
+    <!-- UI Navigation -->
+    <script src="js/ui.js?v=9"></script>
+    
+    <!-- Game Engine -->
+    <script src="js/game.js?v=13"></script>
+    
+    <!-- Main Entry Point -->
+    <script src="js/main.js?v=9"></script>
 </body>
 </html>
 

@@ -8,8 +8,8 @@ function showMainMenu() {
     document.getElementById('scoreboard').classList.add('hidden');
     const cardTracker = document.getElementById('card-tracker');
     if (cardTracker) cardTracker.classList.add('hidden');
-    const resetBtn = document.getElementById('reset-btn');
-    if (resetBtn) resetBtn.classList.add('hidden');
+    const topLeftBtns = document.getElementById('top-left-buttons');
+    if (topLeftBtns) topLeftBtns.classList.add('hidden');
 }
 
 function hideMainMenu() {
@@ -19,8 +19,16 @@ function hideMainMenu() {
     document.getElementById('scoreboard').classList.remove('hidden');
     const cardTracker = document.getElementById('card-tracker');
     if (cardTracker) cardTracker.classList.remove('hidden');
-    const resetBtn = document.getElementById('reset-btn');
-    if (resetBtn) resetBtn.classList.remove('hidden');
+    const topLeftBtns = document.getElementById('top-left-buttons');
+    if (topLeftBtns) topLeftBtns.classList.remove('hidden');
+}
+
+function backToMenu() {
+    // Reset game state and show main menu
+    if (window.game) {
+        window.game.restart();
+    }
+    showMainMenu();
 }
 
 function showOptions() {
