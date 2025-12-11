@@ -6,6 +6,8 @@ class CrackJack {
         this.money = CONFIG.STARTING_MONEY;
         this.currentBet = 0;
         this.lastBet = 0;
+        this.lastSideBetPP = 0;
+        this.lastSideBet21Plus3 = 0;
         this.playerHand = [];
         this.dealerHand = [];
         this.gameInProgress = false;
@@ -44,6 +46,18 @@ class CrackJack {
             threeOfAKind: 30,
             straightFlush: 40,
             suitedTrips: 100
+        };
+        
+        // Chip-based betting system
+        this.selectedChipValue = 10; // Default selected chip
+        this.betHistory = []; // For undo functionality
+        this.chipColors = {
+            1: { color: '#808080', accent: '#a0a0a0' },
+            5: { color: '#dc3545', accent: '#ff6b7a' },
+            10: { color: '#0d6efd', accent: '#5a9cff' },
+            25: { color: '#198754', accent: '#3cb879' },
+            100: { color: '#000000', accent: '#333333' },
+            500: { color: '#6f42c1', accent: '#9969e0' }
         };
 
         // Data from config
@@ -139,6 +153,21 @@ class CrackJack {
         this.preRoundShopClose = document.getElementById('pre-round-shop-close');
         this.shopActivePerksListEl = document.getElementById('shop-active-perks-list');
         
+        // Chip betting elements
+        this.mainBetArea = document.getElementById('main-bet-area');
+        this.ppBetArea = document.getElementById('pp-bet-area');
+        this.plus3BetArea = document.getElementById('21plus3-bet-area');
+        this.mainChipStack = document.getElementById('main-chip-stack');
+        this.ppChipStack = document.getElementById('pp-chip-stack');
+        this.plus3ChipStack = document.getElementById('21plus3-chip-stack');
+        this.mainBetTotal = document.getElementById('main-bet-total');
+        this.ppBetTotal = document.getElementById('pp-bet-total');
+        this.plus3BetTotal = document.getElementById('21plus3-bet-total');
+        this.undoBetBtn = document.getElementById('undo-bet-btn');
+        this.clearBetsBtn = document.getElementById('clear-bets-btn');
+        this.doubleBetBtn = document.getElementById('double-bet-btn');
+        this.chipTray = document.querySelector('.chip-tray');
+        
         // Ensure pre-round shop is hidden on init
         if (this.preRoundShopPopup) {
             this.preRoundShopPopup.classList.add('hidden');
@@ -146,9 +175,35 @@ class CrackJack {
     }
 
     bindEvents() {
-        document.querySelectorAll('.bet-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.placeBet(e.target.closest('.bet-btn')));
+        // Chip selection
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', (e) => this.selectChip(e.target.closest('.chip')));
         });
+        
+        // Bet area clicks
+        if (this.mainBetArea) {
+            this.mainBetArea.addEventListener('click', () => this.placeChipOnArea('main'));
+        }
+        if (this.ppBetArea) {
+            this.ppBetArea.addEventListener('click', () => this.placeChipOnArea('pp'));
+        }
+        if (this.plus3BetArea) {
+            this.plus3BetArea.addEventListener('click', () => this.placeChipOnArea('21plus3'));
+        }
+        
+        // Undo, Clear, and Double buttons
+        if (this.undoBetBtn) {
+            this.undoBetBtn.addEventListener('click', () => this.undoLastBet());
+        }
+        if (this.clearBetsBtn) {
+            this.clearBetsBtn.addEventListener('click', () => this.clearAllBets());
+        }
+        if (this.doubleBetBtn) {
+            this.doubleBetBtn.addEventListener('click', () => this.doubleBets());
+        }
+        
+        // Select default chip (10)
+        this.initializeChipSelection();
         
         // Pre-round shop
         if (this.preRoundShopBtn) {
@@ -176,14 +231,9 @@ class CrackJack {
         this.doubleBtn.addEventListener('click', () => this.double());
         if (this.splitBtn) this.splitBtn.addEventListener('click', () => this.split());
         this.restartBtn.addEventListener('click', () => this.restart());
-        this.sameBetBtn.addEventListener('click', () => this.sameBet());
+        this.sameBetBtn.addEventListener('click', () => this.rebetLastBet());
         this.bossFightBtn.addEventListener('click', () => this.startBossFight());
         this.victoryRestartBtn.addEventListener('click', () => this.restart());
-        
-        // Side bet buttons
-        document.querySelectorAll('.side-bet-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.placeSideBet(e.target));
-        });
     }
 
     // === DECK MANAGEMENT ===
@@ -446,6 +496,267 @@ class CrackJack {
         this.deal();
     }
 
+    // === CHIP-BASED BETTING ===
+    
+    initializeChipSelection() {
+        // Select the $10 chip by default
+        const defaultChip = document.querySelector('.chip[data-value="10"]');
+        if (defaultChip) {
+            defaultChip.classList.add('selected');
+            this.selectedChipValue = 10;
+        }
+    }
+    
+    selectChip(chipEl) {
+        if (this.gameInProgress) return;
+        
+        // Remove selection from all chips
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        
+        // Select clicked chip
+        chipEl.classList.add('selected');
+        this.selectedChipValue = parseInt(chipEl.dataset.value);
+        
+        playChipSound();
+    }
+    
+    placeChipOnArea(areaType) {
+        if (this.gameInProgress) return;
+        if (this.isPopupOpen()) return;
+        
+        const chipValue = this.selectedChipValue;
+        
+        // Check if player has enough money
+        const totalBets = this.currentBet + this.sideBetPP + this.sideBet21Plus3;
+        if (totalBets + chipValue > this.money) {
+            this.showMessage("Not enough chips! You can't bet what you don't have.");
+            return;
+        }
+        
+        // Add chip to appropriate area
+        if (areaType === 'main') {
+            this.currentBet += chipValue;
+            this.betHistory.push({ type: 'main', value: chipValue });
+            this.renderChipStack(this.mainChipStack, this.currentBet);
+            this.mainBetTotal.textContent = `$${this.currentBet}`;
+        } else if (areaType === 'pp') {
+            this.sideBetPP += chipValue;
+            this.betHistory.push({ type: 'pp', value: chipValue });
+            this.renderChipStack(this.ppChipStack, this.sideBetPP);
+            this.ppBetTotal.textContent = `$${this.sideBetPP}`;
+        } else if (areaType === '21plus3') {
+            this.sideBet21Plus3 += chipValue;
+            this.betHistory.push({ type: '21plus3', value: chipValue });
+            this.renderChipStack(this.plus3ChipStack, this.sideBet21Plus3);
+            this.plus3BetTotal.textContent = `$${this.sideBet21Plus3}`;
+        }
+        
+        playChipSound();
+        this.updateBettingButtons();
+        
+        if (areaType === 'main') {
+            this.showMessage(`$${this.currentBet} on the line. Click DEAL when ready!`);
+        } else {
+            const sideName = areaType === 'pp' ? 'Perfect Pairs' : '21+3';
+            const sideAmount = areaType === 'pp' ? this.sideBetPP : this.sideBet21Plus3;
+            this.showMessage(`$${sideAmount} on ${sideName}. Feeling lucky?`);
+        }
+    }
+    
+    renderChipStack(stackEl, totalAmount) {
+        if (!stackEl) return;
+        
+        stackEl.innerHTML = '';
+        
+        if (totalAmount <= 0) return;
+        
+        // Calculate chips to display (show actual chip breakdown)
+        const chipValues = [500, 100, 25, 10, 5, 1];
+        const chipsToShow = [];
+        let remaining = totalAmount;
+        
+        for (const value of chipValues) {
+            while (remaining >= value && chipsToShow.length < 10) { // Max 10 chips shown
+                chipsToShow.push(value);
+                remaining -= value;
+            }
+        }
+        
+        // Render chips in stack (bottom to top)
+        chipsToShow.reverse().forEach((value, index) => {
+            const chipColors = this.chipColors[value] || { color: '#888', accent: '#aaa' };
+            const chipEl = document.createElement('div');
+            chipEl.className = 'chip-in-stack';
+            chipEl.style.setProperty('--chip-color', chipColors.color);
+            chipEl.style.bottom = `${index * 4}px`; // Stack offset
+            chipEl.style.zIndex = index;
+            chipEl.innerHTML = `<span>${value}</span>`;
+            stackEl.appendChild(chipEl);
+        });
+    }
+    
+    undoLastBet() {
+        if (this.gameInProgress) return;
+        if (this.betHistory.length === 0) return;
+        
+        const lastBet = this.betHistory.pop();
+        
+        if (lastBet.type === 'main') {
+            this.currentBet -= lastBet.value;
+            this.renderChipStack(this.mainChipStack, this.currentBet);
+            this.mainBetTotal.textContent = `$${this.currentBet}`;
+        } else if (lastBet.type === 'pp') {
+            this.sideBetPP -= lastBet.value;
+            this.renderChipStack(this.ppChipStack, this.sideBetPP);
+            this.ppBetTotal.textContent = `$${this.sideBetPP}`;
+        } else if (lastBet.type === '21plus3') {
+            this.sideBet21Plus3 -= lastBet.value;
+            this.renderChipStack(this.plus3ChipStack, this.sideBet21Plus3);
+            this.plus3BetTotal.textContent = `$${this.sideBet21Plus3}`;
+        }
+        
+        playChipSound();
+        this.updateBettingButtons();
+        this.showMessage("Chip removed. Second thoughts?");
+    }
+    
+    clearAllBets() {
+        if (this.gameInProgress) return;
+        
+        this.currentBet = 0;
+        this.sideBetPP = 0;
+        this.sideBet21Plus3 = 0;
+        this.betHistory = [];
+        
+        // Clear all chip stacks
+        if (this.mainChipStack) this.mainChipStack.innerHTML = '';
+        if (this.ppChipStack) this.ppChipStack.innerHTML = '';
+        if (this.plus3ChipStack) this.plus3ChipStack.innerHTML = '';
+        
+        // Reset totals
+        if (this.mainBetTotal) this.mainBetTotal.textContent = '$0';
+        if (this.ppBetTotal) this.ppBetTotal.textContent = '$0';
+        if (this.plus3BetTotal) this.plus3BetTotal.textContent = '$0';
+        
+        this.updateBettingButtons();
+        this.showMessage("All bets cleared. Starting fresh!");
+    }
+    
+    rebetLastBet() {
+        if (this.gameInProgress) return;
+        if (this.isPopupOpen()) return;
+        if (this.lastBet <= 0) return;
+        
+        // Clear current bets first
+        this.clearAllBets();
+        
+        // Calculate total last bet including side bets
+        const totalLastBet = this.lastBet + this.lastSideBetPP + this.lastSideBet21Plus3;
+        
+        // Check if we can afford all the last bets
+        if (totalLastBet > this.money) {
+            this.showMessage(`Can't afford last bets totaling $${totalLastBet}!`);
+            return;
+        }
+        
+        // Place the main bet
+        this.currentBet = this.lastBet;
+        this.betHistory.push({ type: 'main', value: this.lastBet });
+        this.renderChipStack(this.mainChipStack, this.currentBet);
+        if (this.mainBetTotal) this.mainBetTotal.textContent = `$${this.currentBet}`;
+        
+        // Place PP side bet if there was one
+        if (this.lastSideBetPP > 0) {
+            this.sideBetPP = this.lastSideBetPP;
+            this.betHistory.push({ type: 'pp', value: this.lastSideBetPP });
+            this.renderChipStack(this.ppChipStack, this.sideBetPP);
+            if (this.ppBetTotal) this.ppBetTotal.textContent = `$${this.sideBetPP}`;
+        }
+        
+        // Place 21+3 side bet if there was one
+        if (this.lastSideBet21Plus3 > 0) {
+            this.sideBet21Plus3 = this.lastSideBet21Plus3;
+            this.betHistory.push({ type: '21plus3', value: this.lastSideBet21Plus3 });
+            this.renderChipStack(this.plus3ChipStack, this.sideBet21Plus3);
+            if (this.plus3BetTotal) this.plus3BetTotal.textContent = `$${this.sideBet21Plus3}`;
+        }
+        
+        this.updateBettingButtons();
+        
+        // Show appropriate message
+        let msg = `Rebet: $${this.lastBet}`;
+        if (this.lastSideBetPP > 0) msg += ` + PP $${this.lastSideBetPP}`;
+        if (this.lastSideBet21Plus3 > 0) msg += ` + 21+3 $${this.lastSideBet21Plus3}`;
+        msg += `. Click DEAL!`;
+        this.showMessage(msg);
+    }
+    
+    updateBettingButtons() {
+        const hasBets = this.currentBet > 0;
+        const hasAnyBets = hasBets || this.sideBetPP > 0 || this.sideBet21Plus3 > 0;
+        const totalBets = this.currentBet + this.sideBetPP + this.sideBet21Plus3;
+        const canDouble = hasAnyBets && (totalBets * 2) <= this.money;
+        
+        if (this.dealBtn) {
+            this.dealBtn.disabled = !hasBets;
+        }
+        if (this.undoBetBtn) {
+            this.undoBetBtn.disabled = this.betHistory.length === 0;
+        }
+        if (this.clearBetsBtn) {
+            this.clearBetsBtn.disabled = !hasAnyBets;
+        }
+        if (this.doubleBetBtn) {
+            this.doubleBetBtn.disabled = !canDouble;
+        }
+    }
+    
+    doubleBets() {
+        if (this.gameInProgress) return;
+        if (this.isPopupOpen()) return;
+        
+        const totalBets = this.currentBet + this.sideBetPP + this.sideBet21Plus3;
+        const doubledTotal = totalBets * 2;
+        
+        if (doubledTotal > this.money) {
+            this.showMessage("Not enough chips to double!");
+            return;
+        }
+        
+        if (totalBets === 0) {
+            this.showMessage("No bets to double!");
+            return;
+        }
+        
+        // Double the main bet
+        if (this.currentBet > 0) {
+            this.betHistory.push({ type: 'main', value: this.currentBet });
+            this.currentBet *= 2;
+            this.renderChipStack(this.mainChipStack, this.currentBet);
+            if (this.mainBetTotal) this.mainBetTotal.textContent = `$${this.currentBet}`;
+        }
+        
+        // Double PP side bet
+        if (this.sideBetPP > 0) {
+            this.betHistory.push({ type: 'pp', value: this.sideBetPP });
+            this.sideBetPP *= 2;
+            this.renderChipStack(this.ppChipStack, this.sideBetPP);
+            if (this.ppBetTotal) this.ppBetTotal.textContent = `$${this.sideBetPP}`;
+        }
+        
+        // Double 21+3 side bet
+        if (this.sideBet21Plus3 > 0) {
+            this.betHistory.push({ type: '21plus3', value: this.sideBet21Plus3 });
+            this.sideBet21Plus3 *= 2;
+            this.renderChipStack(this.plus3ChipStack, this.sideBet21Plus3);
+            if (this.plus3BetTotal) this.plus3BetTotal.textContent = `$${this.sideBet21Plus3}`;
+        }
+        
+        playChipSound();
+        this.updateBettingButtons();
+        this.showMessage(`Doubled! Total bet now $${doubledTotal}. Feeling lucky?`);
+    }
+
     // === GAME ACTIONS ===
 
     isPopupOpen() {
@@ -504,8 +815,21 @@ class CrackJack {
 
         await this.checkAndReshuffle();
 
+        // Save bets for rebet functionality
         this.lastBet = this.currentBet;
+        this.lastSideBetPP = this.sideBetPP;
+        this.lastSideBet21Plus3 = this.sideBet21Plus3;
+        
         this.money -= this.currentBet;
+        
+        // Subtract side bets from player's money
+        if (totalSideBets > 0) {
+            this.money -= totalSideBets;
+            if (sideBetDiscount > 0) {
+                this.showMessage(`🛡️ Side Insurance: Saved $${sideBetDiscount} on side bets!`);
+            }
+        }
+        
         this.updateDisplay();
 
         this.gameInProgress = true;
@@ -559,6 +883,9 @@ class CrackJack {
         
         // Update split button
         this.updateSplitButton();
+        
+        // Evaluate side bets after initial deal
+        await this.evaluateSideBets();
         
         this.showMessage("Your move, genius. 🤔");
         this.updateScores(true);
@@ -643,7 +970,9 @@ class CrackJack {
         } else if (score === 21) {
             this.showMessage("21! Let's see the dealer's response...");
             await this.delay(400);
-            this.stand();
+            // Reset processing flag before calling stand
+            this.isProcessingAction = false;
+            await this.stand();
         } else {
             // Re-enable hit button for next action
             this.isProcessingAction = false;
@@ -695,6 +1024,7 @@ class CrackJack {
         this.hitBtn.disabled = true;
         this.standBtn.disabled = true;
         this.doubleBtn.disabled = true;
+        if (this.splitBtn) this.splitBtn.disabled = true;
 
         this.money -= this.currentBet;
         this.currentBet *= 2;
@@ -705,6 +1035,7 @@ class CrackJack {
 
         const card = this.drawCard();
         this.playerHand.push(card);
+        playCardDealSound();
         this.playerHandEl.appendChild(this.createCardElement(card));
         
         await this.delay(400);
@@ -722,9 +1053,9 @@ class CrackJack {
             this.addToHistory(score, dealerScore, 'loss');
             this.endRound(false);
         } else {
-            if (typeof playChipSound === 'function') playChipSound();
-            this.showMessage(`✂️ Split Results: Break even. ${resultsMessage}`);
-            this.endRound(null);
+            // After doubling, player must stand - dealer plays
+            this.isProcessingAction = false;
+            await this.stand();
         }
     }
 
@@ -1294,8 +1625,18 @@ class CrackJack {
         const val1 = this.playerHand[0].value;
         const val2 = this.playerHand[1].value;
         
-        // Can split if same value
-        return val1 === val2;
+        // Get numeric value for comparison (10, J, Q, K all have value 10)
+        const getNumericValue = (value) => {
+            if (['J', 'Q', 'K'].includes(value)) return 10;
+            if (value === 'A') return 11;
+            return parseInt(value);
+        };
+        
+        const numVal1 = getNumericValue(val1);
+        const numVal2 = getNumericValue(val2);
+        
+        // Can split if same numeric value (allows 10-J, K-Q, etc.)
+        return numVal1 === numVal2;
     }
     
     updateSplitButton() {
@@ -1471,7 +1812,9 @@ class CrackJack {
 
     resetForNewRound() {
         this.currentBet = 0;
-        this.currentBetDisplay.textContent = '$0';
+        this.sideBetPP = 0;
+        this.sideBet21Plus3 = 0;
+        this.betHistory = [];
         this.bettingControls.classList.remove('hidden');
         this.gameControls.classList.add('hidden');
         this.dealBtn.disabled = true;
@@ -1480,8 +1823,20 @@ class CrackJack {
         this.doubleBtn.disabled = false;
         this.isProcessingAction = false;
         if (this.splitBtn) this.splitBtn.disabled = true;
-        document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('selected'));
         this.messageEl.classList.remove('win', 'lose');
+        
+        // Clear chip stacks
+        if (this.mainChipStack) this.mainChipStack.innerHTML = '';
+        if (this.ppChipStack) this.ppChipStack.innerHTML = '';
+        if (this.plus3ChipStack) this.plus3ChipStack.innerHTML = '';
+        
+        // Reset bet totals
+        if (this.mainBetTotal) this.mainBetTotal.textContent = '$0';
+        if (this.ppBetTotal) this.ppBetTotal.textContent = '$0';
+        if (this.plus3BetTotal) this.plus3BetTotal.textContent = '$0';
+        
+        // Update buttons
+        this.updateBettingButtons();
         
         this.dealerHandEl.innerHTML = '';
         this.playerHandEl.innerHTML = '';
@@ -1500,12 +1855,13 @@ class CrackJack {
         this.refreshShopInventory();
         
         if (this.lastBet > 0 && this.money > 0) {
-            this.rebetSection.classList.remove('hidden');
-            const rebetAmount = Math.min(this.lastBet, this.money);
-            this.rebetAmountEl.textContent = `$${rebetAmount}`;
-            this.showMessage(`Same bet ($${rebetAmount}) or pick a new amount!`);
+            const totalRebet = this.lastBet + this.lastSideBetPP + this.lastSideBet21Plus3;
+            if (totalRebet <= this.money) {
+                this.showMessage(`Click bet areas or REBET for $${totalRebet} total!`);
+            } else {
+                this.showMessage(`Place your bet! (Last bet was $${totalRebet})`);
+            }
         } else {
-            this.rebetSection.classList.add('hidden');
             this.showMessage("Place your bet, if you dare... 💰");
         }
     }
@@ -1519,6 +1875,8 @@ class CrackJack {
         this.money = CONFIG.STARTING_MONEY;
         this.currentBet = 0;
         this.lastBet = 0;
+        this.lastSideBetPP = 0;
+        this.lastSideBet21Plus3 = 0;
         this.handsPlayed = 0;
         this.timesLost = 0;
         this.playerHand = [];

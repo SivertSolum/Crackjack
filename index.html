@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRACKJACK - The World's Most Fair Casino™</title>
-    <link rel="stylesheet" href="style.css?v=30">
+    <link rel="stylesheet" href="style.css?v=39">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -29,8 +29,9 @@
     
     <!-- Top Left Buttons -->
     <div class="top-left-buttons hidden" id="top-left-buttons">
-        <button class="reset-btn" id="reset-btn" title="Restart Game">🔄 RESET</button>
-        <button class="menu-btn-small" id="menu-btn" title="Back to Menu">🏠 MENU</button>
+        <button class="reset-btn" id="reset-btn" title="Restart Game">RESET</button>
+        <button class="menu-btn-small" id="menu-btn" title="Back to Menu">MENU</button>
+        <button class="shop-btn-small" id="pre-round-shop-btn" title="Perk Shop">SHOP</button>
     </div>
     
     <!-- Card Tracker (Left Side) -->
@@ -334,50 +335,70 @@
 
         <div class="controls">
             <div class="betting-controls" id="betting-controls">
-                <!-- Combined Rebet + Side Bets Row -->
-                <div class="side-bets-and-rebet-container">
-                    <!-- Quick Rebet Section (shown after first hand) -->
-                    <div class="rebet-section hidden" id="rebet-section">
-                        <button class="rebet-btn" id="same-bet-btn">
-                            🔄 <span class="rebet-amount" id="rebet-amount">$100</span>
+                <!-- Bet Areas on Table -->
+                <div class="betting-table">
+                    <!-- Side Bet Areas -->
+                    <div class="bet-areas-row">
+                        <div class="bet-area side-bet-area" id="pp-bet-area" data-bet-type="pp">
+                            <div class="bet-area-label">PERFECT<br>PAIRS</div>
+                            <div class="bet-area-payout">5:1 - 25:1</div>
+                            <div class="chip-stack" id="pp-chip-stack"></div>
+                            <div class="bet-area-total" id="pp-bet-total">$0</div>
+                        </div>
+                        <div class="bet-area main-bet-area" id="main-bet-area" data-bet-type="main">
+                            <div class="bet-area-label">MAIN BET</div>
+                            <div class="chip-stack" id="main-chip-stack"></div>
+                            <div class="bet-area-total" id="main-bet-total">$0</div>
+                        </div>
+                        <div class="bet-area side-bet-area" id="21plus3-bet-area" data-bet-type="21plus3">
+                            <div class="bet-area-label">21+3</div>
+                            <div class="bet-area-payout">5:1 - 100:1</div>
+                            <div class="chip-stack" id="21plus3-chip-stack"></div>
+                            <div class="bet-area-total" id="21plus3-bet-total">$0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chip Selector -->
+                <div class="chip-selector">
+                    <div class="chip-tray">
+                        <div class="chip" data-value="1" style="--chip-color: #808080; --chip-accent: #a0a0a0;">
+                            <span class="chip-value">1</span>
+                        </div>
+                        <div class="chip" data-value="5" style="--chip-color: #dc3545; --chip-accent: #ff6b7a;">
+                            <span class="chip-value">5</span>
+                        </div>
+                        <div class="chip" data-value="10" style="--chip-color: #0d6efd; --chip-accent: #5a9cff;">
+                            <span class="chip-value">10</span>
+                        </div>
+                        <div class="chip" data-value="25" style="--chip-color: #198754; --chip-accent: #3cb879;">
+                            <span class="chip-value">25</span>
+                        </div>
+                        <div class="chip" data-value="100" style="--chip-color: #000000; --chip-accent: #333333;">
+                            <span class="chip-value">100</span>
+                        </div>
+                        <div class="chip" data-value="500" style="--chip-color: #6f42c1; --chip-accent: #9969e0;">
+                            <span class="chip-value">500</span>
+                        </div>
+                    </div>
+                    
+                    <div class="betting-actions">
+                        <button class="betting-action-btn undo-btn" id="undo-bet-btn" disabled>
+                            UNDO
+                        </button>
+                        <button class="betting-action-btn clear-btn" id="clear-bets-btn" disabled>
+                            CLEAR
+                        </button>
+                        <button class="betting-action-btn rebet-btn" id="same-bet-btn">
+                            REBET
+                        </button>
+                        <button class="betting-action-btn double-bet-btn" id="double-bet-btn" disabled>
+                            2X
+                        </button>
+                        <button class="betting-action-btn deal-btn" id="deal-btn" disabled>
+                            DEAL
                         </button>
                     </div>
-                
-                    <!-- Side Bets Section -->
-                    <div class="side-bets-section" id="side-bets-section">
-                        <div class="side-bet-option">
-                            <label class="side-bet-label">👫 PP <span class="side-bet-info" title="Perfect Pairs: Win if your first two cards are a pair!">ⓘ</span></label>
-                            <div class="side-bet-buttons" id="pp-buttons">
-                                <button class="side-bet-btn active" data-type="pp" data-amount="0">OFF</button>
-                                <button class="side-bet-btn" data-type="pp" data-amount="10">$10</button>
-                                <button class="side-bet-btn" data-type="pp" data-amount="25">$25</button>
-                                <button class="side-bet-btn" data-type="pp" data-amount="50">$50</button>
-                            </div>
-                        </div>
-                        <div class="side-bet-option">
-                            <label class="side-bet-label">🃏 21+3 <span class="side-bet-info" title="21+3: Win if your cards + dealer upcard make poker hand!">ⓘ</span></label>
-                            <div class="side-bet-buttons" id="21plus3-buttons">
-                                <button class="side-bet-btn active" data-type="21plus3" data-amount="0">OFF</button>
-                                <button class="side-bet-btn" data-type="21plus3" data-amount="10">$10</button>
-                                <button class="side-bet-btn" data-type="21plus3" data-amount="25">$25</button>
-                                <button class="side-bet-btn" data-type="21plus3" data-amount="50">$50</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="side-bets-total">Side: <span id="side-bets-total">$0</span></div>
-                </div>
-                
-                <div class="bet-buttons">
-                    <button class="bet-btn" data-amount="10">$10<br><span class="subtext">(Coward)</span></button>
-                    <button class="bet-btn" data-amount="50">$50<br><span class="subtext">(Meh)</span></button>
-                    <button class="bet-btn" data-amount="100">$100<br><span class="subtext">(Spicy)</span></button>
-                    <button class="bet-btn" data-amount="500">$500<br><span class="subtext">(Degenerate)</span></button>
-                    <button class="bet-btn all-in" data-amount="all">ALL IN<br><span class="subtext">(Legend)</span></button>
-                </div>
-                <div class="current-bet">
-                    <button class="shop-btn" id="pre-round-shop-btn">🛒 SHOP</button>
-                    Current Bet: <span id="current-bet">$0</span>
-                    <button class="deal-btn" id="deal-btn" disabled>DEAL ME IN</button>
                 </div>
             </div>
 
@@ -524,7 +545,7 @@
     <script src="js/config.js?v=22"></script>
     <script src="js/audio.js?v=22"></script>
     <script src="js/ui.js?v=27"></script>
-    <script src="js/game.js?v=30"></script>
+    <script src="js/game.js?v=36"></script>
     <script src="js/main.js?v=22"></script>
 </body>
 </html>
