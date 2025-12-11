@@ -1041,11 +1041,18 @@ header h1 {
 }
 
 .betting-controls {
-    background: #1a0a2e;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(26, 10, 46, 0.95);
     border: 2px solid var(--purple);
     padding: 8px 12px;
-    box-shadow: 2px 2px 0px #000;
-    flex-shrink: 0;
+    box-shadow: 2px 2px 0px #000, 0 0 30px rgba(0, 0, 0, 0.8);
+    z-index: 100;
+    border-radius: 10px;
+    max-width: 700px;
+    width: 90%;
 }
 
 /* Container for side bets - horizontal layout */
@@ -4072,6 +4079,8 @@ button.perk-shop-item {
     .betting-controls {
         padding: 4px;
         border-width: 1px;
+        bottom: 5px;
+        width: 95%;
     }
     
     .rebet-section {
@@ -4352,6 +4361,8 @@ button.perk-shop-item {
     
     .betting-controls {
         padding: 3px;
+        bottom: 5px;
+        width: 95%;
     }
     
     .game-controls {

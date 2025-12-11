@@ -14,6 +14,7 @@ class CrackJack {
         this.isProcessingAction = false;
         this.handsPlayed = 0;
         this.timesLost = 0;
+        this.lastRoundWon = false;
 
         // Roguelike elements
         this.currentFloor = 1;
@@ -265,10 +266,12 @@ class CrackJack {
         this.standBtn.addEventListener('click', () => this.stand());
         this.doubleBtn.addEventListener('click', () => this.double());
         if (this.splitBtn) this.splitBtn.addEventListener('click', () => this.split());
-        this.restartBtn.addEventListener('click', () => this.restart());
-        this.sameBetBtn.addEventListener('click', () => this.rebetLastBet());
-        this.bossFightBtn.addEventListener('click', () => this.startBossFight());
-        this.victoryRestartBtn.addEventListener('click', () => this.restart());
+        if (this.restartBtn) {
+            this.restartBtn.addEventListener('click', () => this.restart());
+        }
+        if (this.sameBetBtn) this.sameBetBtn.addEventListener('click', () => this.rebetLastBet());
+        if (this.bossFightBtn) this.bossFightBtn.addEventListener('click', () => this.startBossFight());
+        if (this.victoryRestartBtn) this.victoryRestartBtn.addEventListener('click', () => this.restart());
     }
 
     // === DECK MANAGEMENT ===
@@ -1431,6 +1434,9 @@ class CrackJack {
 
         this.updateDisplay();
         this.updateRoguelikeDisplay();
+        
+        // Store whether the player won this round (for shop access)
+        this.lastRoundWon = playerWon === true;
 
         setTimeout(() => {
             if (this.money <= 0) {
@@ -1869,9 +1875,13 @@ class CrackJack {
         // Update the money display
         this.updateDisplay();
         
-        // Show post-round choice (but not on first round or if broke)
+        // Show post-round choice only if player WON (and not first round or broke)
         if (this.handsPlayed > 0 && this.money > 0) {
-            this.showPostRoundPopup();
+            if (this.lastRoundWon) {
+                this.showPostRoundPopup();
+            } else {
+                this.showMessage("No shop for losers! Place your bet...");
+            }
         }
     }
     
@@ -1963,6 +1973,7 @@ class CrackJack {
         this.playerHand = [];
         this.dealerHand = [];
         this.gameInProgress = false;
+        this.lastRoundWon = false;
         
         this.currentFloor = 1;
         this.winStreak = 0;
