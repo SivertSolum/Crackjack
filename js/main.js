@@ -1,7 +1,39 @@
 // CRACKJACK - Main Entry Point
 // Initializes the game and sets up event listeners
 
+// Viewport scaling for proportional UI
+function updateGameScale() {
+    const wrapper = document.getElementById('game-scale-wrapper');
+    if (!wrapper) return;
+    
+    const baseWidth = 1200;
+    const baseHeight = 800;
+    
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // Calculate scale to fit while maintaining aspect ratio
+    const scaleX = windowWidth / baseWidth;
+    const scaleY = windowHeight / baseHeight;
+    const scale = Math.min(scaleX, scaleY);
+    
+    // Apply scale transform
+    wrapper.style.transform = `translateX(-50%) scale(${scale})`;
+    
+    // Adjust wrapper position for centering vertically when there's extra space
+    if (scaleY > scaleX) {
+        const extraHeight = (windowHeight - (baseHeight * scale)) / 2;
+        wrapper.style.top = `${extraHeight}px`;
+    } else {
+        wrapper.style.top = '0px';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize viewport scaling
+    updateGameScale();
+    window.addEventListener('resize', updateGameScale);
+    
     // Initialize audio system
     initAudio();
     

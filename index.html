@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRACKJACK - The World's Most Fair Casino™</title>
-    <link rel="stylesheet" href="style.css?v=39">
+    <link rel="stylesheet" href="style.css?v=46">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="game-scale-wrapper" id="game-scale-wrapper">
     <div class="scanlines"></div>
     
     <!-- Audio Player for Music -->
@@ -31,7 +32,6 @@
     <div class="top-left-buttons hidden" id="top-left-buttons">
         <button class="reset-btn" id="reset-btn" title="Restart Game">RESET</button>
         <button class="menu-btn-small" id="menu-btn" title="Back to Menu">MENU</button>
-        <button class="shop-btn-small" id="pre-round-shop-btn" title="Perk Shop">SHOP</button>
     </div>
     
     <!-- Card Tracker (Left Side) -->
@@ -148,7 +148,7 @@
             </div>
             
             <div class="menu-footer">
-                <p class="version-number" id="version-number">v1.0.0</p>
+                <p class="version-number" id="version-number">v1.0.6</p>
                 <button class="changelog-btn" id="changelog-btn">📜 Changelog</button>
                 <p>© 2024 Satan's Casino Inc.</p>
                 <p class="disclaimer">Warning: You WILL lose.</p>
@@ -340,7 +340,7 @@
                     <!-- Side Bet Areas -->
                     <div class="bet-areas-row">
                         <div class="bet-area side-bet-area" id="pp-bet-area" data-bet-type="pp">
-                            <div class="bet-area-label">PERFECT<br>PAIRS</div>
+                            <div class="bet-area-label">PERFECT PAIRS</div>
                             <div class="bet-area-payout">5:1 - 25:1</div>
                             <div class="chip-stack" id="pp-chip-stack"></div>
                             <div class="bet-area-total" id="pp-bet-total">$0</div>
@@ -535,18 +535,47 @@
 
     <div class="popup hidden" id="broke-popup">
         <div class="popup-content">
-            <h2>💀 YOU'RE BROKE 💀</h2>
+            <h2>YOU'RE BROKE</h2>
             <p class="broke-message" id="broke-message"></p>
-            <button class="restart-btn" id="restart-btn">🔄 Try Again (Why Though?)</button>
+            <button class="restart-btn" id="restart-btn">Try Again (Why Though?)</button>
         </div>
     </div>
+    
+    <!-- Post-Round Choice Popup -->
+    <div class="popup hidden" id="post-round-popup">
+        <div class="popup-content post-round-content">
+            <h2>ROUND COMPLETE</h2>
+            <p class="post-round-stats" id="post-round-stats"></p>
+            <div class="post-round-buttons">
+                <button class="post-round-btn shop-btn" id="go-to-shop-btn">GO TO SHOP</button>
+                <button class="post-round-btn skip-btn" id="skip-shop-btn">CONTINUE</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floor Complete Popup -->
+    <div class="popup hidden" id="floor-complete-popup">
+        <div class="popup-content floor-complete-content">
+            <h2 id="floor-complete-title">FLOOR COMPLETE</h2>
+            <p class="floor-complete-msg" id="floor-complete-msg"></p>
+            <div class="dealer-perk-reveal" id="dealer-perk-reveal">
+                <h3>DEALER GAINS NEW POWER</h3>
+                <div class="dealer-perk-icon" id="dealer-perk-icon"></div>
+                <div class="dealer-perk-name" id="dealer-perk-name"></div>
+                <div class="dealer-perk-desc" id="dealer-perk-desc"></div>
+            </div>
+            <button class="post-round-btn" id="next-floor-btn">ASCEND TO NEXT FLOOR</button>
+        </div>
+    </div>
+    
+    </div><!-- End game-scale-wrapper -->
 
     <!-- Modular JavaScript -->
-    <script src="js/config.js?v=22"></script>
+    <script src="js/config.js?v=23"></script>
     <script src="js/audio.js?v=22"></script>
     <script src="js/ui.js?v=27"></script>
-    <script src="js/game.js?v=36"></script>
-    <script src="js/main.js?v=22"></script>
+    <script src="js/game.js?v=41"></script>
+    <script src="js/main.js?v=23"></script>
 </body>
 </html>
 

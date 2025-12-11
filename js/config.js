@@ -132,6 +132,66 @@ const ELITES = [
     { id: 'phantom', name: 'THE PHANTOM', icon: '👻', desc: '"Now you see me..."', rule: 'Dealer\'s cards all face-down', ability: 'hiddenDealer' }
 ];
 
+// Dealer Perks - permanent abilities dealer gains after each floor
+const DEALER_PERKS = [
+    { 
+        id: 'standOn18', 
+        name: 'Iron Stance', 
+        icon: '🛡️', 
+        desc: 'Dealer now stands on 18+',
+        effect: 'dealerStandsOn',
+        value: 18
+    },
+    { 
+        id: 'hitSoft17', 
+        name: 'Aggressive Play', 
+        icon: '⚔️', 
+        desc: 'Dealer hits on soft 17',
+        effect: 'dealerHitsSoft17',
+        value: true
+    },
+    { 
+        id: 'peekHole', 
+        name: 'X-Ray Vision', 
+        icon: '👁️', 
+        desc: 'Dealer peeks at hole card (auto-wins blackjack ties)',
+        effect: 'dealerPeeks',
+        value: true
+    },
+    { 
+        id: 'fastHands', 
+        name: 'Fast Hands', 
+        icon: '🖐️', 
+        desc: 'Dealer draws an extra card if under 15',
+        effect: 'extraDraw',
+        value: 15
+    },
+    { 
+        id: 'taxCollector', 
+        name: 'Tax Collector', 
+        icon: '💸', 
+        desc: 'Wins pay 10% less',
+        effect: 'reducedPayout',
+        value: 0.9
+    },
+    { 
+        id: 'houseEdge', 
+        name: 'House Edge', 
+        icon: '🏠', 
+        desc: 'Pushes count as dealer wins',
+        effect: 'pushLose',
+        value: true
+    },
+    { 
+        id: 'cardShark', 
+        name: 'Card Shark', 
+        icon: '🦈', 
+        desc: 'Dealer always draws favorable cards when under 17',
+        effect: 'favorableDraws',
+        value: true
+    }
+];
+
 // Bosses - one per floor, increasing difficulty
 const BOSSES = [
     { 

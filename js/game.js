@@ -25,6 +25,10 @@ class CrackJack {
         this.currentBoss = null;
         this.totalWins = 0;
         
+        // Dealer perks (permanent abilities gained each floor)
+        this.dealerPerks = [];
+        this.allDealerPerks = typeof DEALER_PERKS !== 'undefined' ? DEALER_PERKS : [];
+        
         // Split state
         this.isSplitHand = false;
         this.splitHands = [];
@@ -148,6 +152,22 @@ class CrackJack {
         // Pre-round shop elements
         this.preRoundShopBtn = document.getElementById('pre-round-shop-btn');
         this.preRoundShopPopup = document.getElementById('pre-round-shop-popup');
+        
+        // Post-round choice popup
+        this.postRoundPopup = document.getElementById('post-round-popup');
+        this.postRoundStats = document.getElementById('post-round-stats');
+        this.goToShopBtn = document.getElementById('go-to-shop-btn');
+        this.skipShopBtn = document.getElementById('skip-shop-btn');
+        
+        // Floor complete popup
+        this.floorCompletePopup = document.getElementById('floor-complete-popup');
+        this.floorCompleteTitle = document.getElementById('floor-complete-title');
+        this.floorCompleteMsg = document.getElementById('floor-complete-msg');
+        this.dealerPerkReveal = document.getElementById('dealer-perk-reveal');
+        this.dealerPerkIcon = document.getElementById('dealer-perk-icon');
+        this.dealerPerkName = document.getElementById('dealer-perk-name');
+        this.dealerPerkDesc = document.getElementById('dealer-perk-desc');
+        this.nextFloorBtn = document.getElementById('next-floor-btn');
         this.preRoundShopItems = document.getElementById('pre-round-shop-items');
         this.preRoundShopMoney = document.getElementById('pre-round-shop-money');
         this.preRoundShopClose = document.getElementById('pre-round-shop-close');
@@ -205,15 +225,30 @@ class CrackJack {
         // Select default chip (10)
         this.initializeChipSelection();
         
-        // Pre-round shop
-        if (this.preRoundShopBtn) {
-            this.preRoundShopBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+        // Pre-round shop (now shows automatically after each round)
+        if (this.preRoundShopClose) {
+            this.preRoundShopClose.addEventListener('click', () => this.hidePreRoundShop());
+        }
+        
+        // Post-round choice buttons
+        if (this.goToShopBtn) {
+            this.goToShopBtn.addEventListener('click', () => {
+                this.hidePostRoundPopup();
                 this.showPreRoundShop();
             });
         }
-        if (this.preRoundShopClose) {
-            this.preRoundShopClose.addEventListener('click', () => this.hidePreRoundShop());
+        if (this.skipShopBtn) {
+            this.skipShopBtn.addEventListener('click', () => {
+                this.hidePostRoundPopup();
+            });
+        }
+        
+        // Floor complete button
+        if (this.nextFloorBtn) {
+            this.nextFloorBtn.addEventListener('click', () => {
+                this.hideFloorCompletePopup();
+                this.advanceToNextFloor();
+            });
         }
         
         // Prevent popup backdrop clicks from closing - only close via buttons
@@ -795,8 +830,15 @@ class CrackJack {
         }
         
         const totalRequired = this.currentBet + totalSideBets;
+        const minBet = this.getMinBet();
         
         if (this.currentBet <= 0 || totalRequired > this.money) return;
+        
+        // Check minimum bet for current floor
+        if (this.currentBet < minBet) {
+            this.showMessage(`Minimum bet on Floor ${this.currentFloor} is $${minBet}!`);
+            return;
+        }
 
         // Apply per-hand costs (curses)
         if (this.hasCurse && this.hasCurse('heavyDebt')) {
@@ -1371,16 +1413,8 @@ class CrackJack {
                 return;
             }
             
-            if (this.isBossFight) {
-                this.isBossFight = false;
-                this.currentBoss = null;
-                this.tableEl.classList.remove('boss-mode');
-                this.currentFloor++;
-                this.winStreak = 0;
-                this.showMessage("🎉 BOSS DEFEATED! Floor " + this.currentFloor + " awaits!", 'win');
-            }
-            
-            if (this.winStreak >= this.winsNeededForUpgrade && !this.isBossFight) {
+            // Check for floor completion (win streak reached)
+            if (this.winStreak >= this.winsNeededForUpgrade) {
                 setTimeout(() => this.showUpgradeSelection(), 1500);
                 return;
             }
@@ -1391,18 +1425,7 @@ class CrackJack {
             
             if (this.hasPerk('insurance') && Math.random() < 0.3) {
                 this.money += this.currentBet;
-                this.showMessage("💰 Insurance Fraud activated! Bet returned!", 'win');
-            }
-            
-            if (this.isBossFight && this.currentBoss?.multiplierLose) {
-                const extraLoss = this.currentBet * (this.currentBoss.multiplierLose - 1);
-                this.money -= extraLoss;
-            }
-            
-            if (this.isBossFight) {
-                this.isBossFight = false;
-                this.currentBoss = null;
-                this.tableEl.classList.remove('boss-mode');
+                this.showMessage("Insurance Fraud activated! Bet returned!", 'win');
             }
         }
 
@@ -1413,11 +1436,7 @@ class CrackJack {
             if (this.money <= 0) {
                 this.showBrokeScreen();
             } else {
-                if (this.winStreak >= this.winsNeededForUpgrade) {
-                    this.triggerBossFight();
-                } else {
-                    this.resetForNewRound();
-                }
+                this.resetForNewRound();
             }
         }, 1800);
     }
@@ -1465,29 +1484,9 @@ class CrackJack {
         this.winStreak = 0;
         this.updateRoguelikeDisplay();
         
-        this.triggerBossFight();
-    }
-
-    triggerBossFight() {
-        const bossIndex = Math.min(this.currentFloor - 1, this.bosses.length - 1);
-        const boss = this.bosses[bossIndex];
-        
-        this.bossPortraitEl.textContent = boss.icon;
-        this.bossNameEl.textContent = boss.name;
-        this.bossDescEl.textContent = boss.desc;
-        this.bossRuleEl.textContent = '⚠️ ' + boss.rule;
-        
-        this.bossPopup.classList.remove('hidden');
-        this.currentBoss = boss;
-    }
-
-    startBossFight() {
-        this.bossPopup.classList.add('hidden');
-        this.isBossFight = true;
-        this.tableEl.classList.add('boss-mode');
-        
-        this.showMessage(`⚔️ BOSS FIGHT: ${this.currentBoss.name}! ⚔️`, 'lose');
-        this.resetForNewRound();
+        // Grant dealer a new perk and show floor complete popup
+        const dealerPerk = this.grantDealerPerk();
+        this.showFloorCompletePopup(dealerPerk);
     }
 
     showVictoryScreen() {
@@ -1531,6 +1530,8 @@ class CrackJack {
         if (this.preRoundShopPopup) {
             this.preRoundShopPopup.classList.add('hidden');
         }
+        // Make sure money display is up to date after shopping
+        this.updateDisplay();
     }
     
     refreshShopInventory() {
@@ -1864,6 +1865,86 @@ class CrackJack {
         } else {
             this.showMessage("Place your bet, if you dare... 💰");
         }
+        
+        // Update the money display
+        this.updateDisplay();
+        
+        // Show post-round choice (but not on first round or if broke)
+        if (this.handsPlayed > 0 && this.money > 0) {
+            this.showPostRoundPopup();
+        }
+    }
+    
+    getMinBet() {
+        const floorIndex = Math.min(this.currentFloor - 1, CONFIG.MIN_BET_PER_FLOOR.length - 1);
+        return CONFIG.MIN_BET_PER_FLOOR[floorIndex];
+    }
+    
+    showPostRoundPopup() {
+        if (!this.postRoundPopup) return;
+        
+        const minBet = this.getMinBet();
+        this.postRoundStats.innerHTML = `
+            Money: $${this.money}<br>
+            Floor ${this.currentFloor} - Min Bet: $${minBet}<br>
+            Wins: ${this.totalWins} | Streak: ${this.winStreak}/${this.winsNeededForUpgrade}
+        `;
+        
+        this.postRoundPopup.classList.remove('hidden');
+    }
+    
+    hidePostRoundPopup() {
+        if (this.postRoundPopup) {
+            this.postRoundPopup.classList.add('hidden');
+        }
+        // Ensure money display is current
+        this.updateDisplay();
+    }
+    
+    showFloorCompletePopup(newPerk) {
+        if (!this.floorCompletePopup) return;
+        
+        this.floorCompleteTitle.textContent = `FLOOR ${this.currentFloor} COMPLETE!`;
+        this.floorCompleteMsg.textContent = `You've conquered this floor, but the dealer grows stronger...`;
+        
+        if (newPerk) {
+            this.dealerPerkReveal.style.display = 'block';
+            this.dealerPerkIcon.textContent = newPerk.icon;
+            this.dealerPerkName.textContent = newPerk.name;
+            this.dealerPerkDesc.textContent = newPerk.desc;
+        } else {
+            this.dealerPerkReveal.style.display = 'none';
+        }
+        
+        this.floorCompletePopup.classList.remove('hidden');
+    }
+    
+    hideFloorCompletePopup() {
+        if (this.floorCompletePopup) {
+            this.floorCompletePopup.classList.add('hidden');
+        }
+    }
+    
+    advanceToNextFloor() {
+        this.currentFloor++;
+        this.winStreak = 0;
+        const newMinBet = this.getMinBet();
+        this.showMessage(`Welcome to Floor ${this.currentFloor}! Min bet: $${newMinBet}`);
+        this.updateRoguelikeDisplay();
+        this.resetForNewRound();
+    }
+    
+    grantDealerPerk() {
+        // Get a random perk the dealer doesn't already have
+        const availablePerks = this.allDealerPerks.filter(
+            p => !this.dealerPerks.find(dp => dp.id === p.id)
+        );
+        
+        if (availablePerks.length === 0) return null;
+        
+        const newPerk = availablePerks[Math.floor(Math.random() * availablePerks.length)];
+        this.dealerPerks.push(newPerk);
+        return newPerk;
     }
 
     showBrokeScreen() {
@@ -1887,10 +1968,13 @@ class CrackJack {
         this.winStreak = 0;
         this.totalWins = 0;
         this.activePerks = [];
+        this.dealerPerks = [];
         this.isBossFight = false;
         this.currentBoss = null;
 
         this.brokePopup.classList.add('hidden');
+        if (this.postRoundPopup) this.postRoundPopup.classList.add('hidden');
+        if (this.floorCompletePopup) this.floorCompletePopup.classList.add('hidden');
         this.victoryPopup.classList.add('hidden');
         this.upgradePopup.classList.add('hidden');
         this.bossPopup.classList.add('hidden');

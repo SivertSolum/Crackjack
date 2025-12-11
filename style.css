@@ -26,6 +26,17 @@ html, body {
     overflow: hidden;
 }
 
+/* Scaling Wrapper for Proportional Resizing */
+.game-scale-wrapper {
+    width: 1200px;
+    height: 800px;
+    transform-origin: top center;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
 body {
     font-family: 'Press Start 2P', 'Courier New', monospace;
     background: var(--bg-dark);
@@ -59,8 +70,9 @@ body {
 }
 
 .game-container {
-    height: 100vh;
-    max-height: 100vh;
+    height: 800px;
+    max-height: 800px;
+    width: 900px;
     max-width: 900px;
     margin: 0 auto;
     padding: 6px 12px;
@@ -245,11 +257,11 @@ header h1 {
 
 /* Shuffle overlay message */
 .shuffle-overlay {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
+    width: 1200px;
+    height: 800px;
     background: rgba(0,0,0,0.8);
     display: flex;
     justify-content: center;
@@ -1363,7 +1375,7 @@ header h1 {
     display: flex;
     gap: 15px;
     justify-content: center;
-    align-items: flex-end;
+    align-items: stretch;
 }
 
 /* Individual Bet Area */
@@ -1371,6 +1383,7 @@ header h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: space-between;
     padding: 10px 15px;
     border-radius: 10px;
     cursor: pointer;
@@ -1408,8 +1421,7 @@ header h1 {
     border: 2px solid #9966cc;
     min-width: 130px;
     width: 130px;
-    min-height: 110px;
-    padding: 12px 15px;
+    padding: 10px 15px;
 }
 
 .side-bet-area:hover {
@@ -1449,7 +1461,10 @@ header h1 {
     font-family: 'Press Start 2P', monospace;
     font-size: 0.75rem;
     color: #ffd700;
-    margin-top: 8px;
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
     text-shadow: 1px 1px 2px #000;
 }
 
@@ -1873,11 +1888,11 @@ header h1 {
 
 /* Broke Popup */
 .popup {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 1200px;
+    height: 800px;
     background: rgba(0, 0, 0, 0.9);
     display: none;
     align-items: center;
@@ -1900,6 +1915,106 @@ header h1 {
     max-width: 450px;
     /* Ensure content receives clicks */
     pointer-events: auto;
+}
+
+/* Post-Round Choice Popup */
+.post-round-content {
+    border-color: var(--gold);
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+}
+
+.post-round-content h2 {
+    color: var(--gold);
+    animation: none;
+}
+
+.post-round-stats {
+    font-size: 0.6rem;
+    color: #ccc;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.post-round-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.post-round-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    padding: 12px 20px;
+    border: 3px solid;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 3px 3px 0px #000;
+}
+
+.post-round-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0px #000;
+}
+
+.post-round-btn.shop-btn {
+    background: linear-gradient(180deg, #198754 0%, #0d5c36 100%);
+    border-color: #28a745;
+    color: #fff;
+}
+
+.post-round-btn.skip-btn {
+    background: linear-gradient(180deg, #6c757d 0%, #495057 100%);
+    border-color: #adb5bd;
+    color: #fff;
+}
+
+/* Floor Complete Popup */
+.floor-complete-content {
+    border-color: #ff4444;
+    box-shadow: 0 0 50px rgba(255, 68, 68, 0.5);
+    max-width: 500px;
+}
+
+.floor-complete-content h2 {
+    color: #ff4444;
+    font-size: 1.1rem;
+    animation: none;
+}
+
+.floor-complete-msg {
+    font-size: 0.55rem;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.dealer-perk-reveal {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid #ff4444;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.dealer-perk-reveal h3 {
+    font-size: 0.5rem;
+    color: #ff4444;
+    margin-bottom: 12px;
+}
+
+.dealer-perk-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.dealer-perk-name {
+    font-size: 0.6rem;
+    color: var(--gold);
+    margin-bottom: 5px;
+}
+
+.dealer-perk-desc {
+    font-size: 0.45rem;
+    color: #aaa;
 }
 
 .popup-content h2 {
@@ -2091,11 +2206,11 @@ header h1 {
 
 /* Main Menu */
 .main-menu {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 1200px;
+    height: 800px;
     background: linear-gradient(180deg, #1a0a2e 0%, #0a0015 50%, #1a0a2e 100%);
     display: flex;
     align-items: center;
@@ -2522,7 +2637,7 @@ header h1 {
 
 /* Music Controls */
 .music-controls {
-    position: fixed;
+    position: absolute;
     top: 10px;
     right: 10px;
     z-index: 3000;
@@ -2641,7 +2756,7 @@ header h1 {
 
 /* Top Left Buttons Container */
 .top-left-buttons {
-    position: fixed;
+    position: absolute;
     top: 10px;
     left: 10px;
     display: flex;
@@ -2727,10 +2842,10 @@ header h1 {
 
 /* Card Tracker (Left Side) */
 .card-tracker {
-    position: fixed;
+    position: absolute;
     left: 10px;
     top: 60px;
-    bottom: 10px;
+    height: 720px;
     width: 150px;
     background: linear-gradient(180deg, #2a1a3e 0%, #1a0a2e 100%);
     border: 3px solid var(--gold);
@@ -2814,10 +2929,10 @@ header h1 {
 }
 
 .scoreboard {
-    position: fixed;
+    position: absolute;
     right: 10px;
     top: 70px;
-    bottom: 10px;
+    height: 710px;
     width: 150px;
     background: linear-gradient(180deg, #2a1a3e 0%, #1a0a2e 100%);
     border: 3px solid var(--gold);
