@@ -148,6 +148,11 @@ class CrackJack {
         
         // New roguelike elements
         this.eventPopup = document.getElementById('event-popup');
+        this.eventIcon = document.getElementById('event-icon');
+        this.eventName = document.getElementById('event-name');
+        this.eventDescription = document.getElementById('event-description');
+        this.eventChoices = document.getElementById('event-choices');
+        this.currentEvent = null;
         this.shopPopup = document.getElementById('shop-popup');
         this.mapPopup = document.getElementById('map-popup');
         this.roomIndicator = document.getElementById('room-indicator');
@@ -1582,6 +1587,13 @@ class CrackJack {
                 payout = this.currentBet * this.currentBoss.multiplierWin;
             }
             
+            // Blessing from events: Double payout once
+            if (this.blessingActive) {
+                payout *= 2;
+                this.blessingActive = false;
+                this.showMessage("🙏 Blessing activated! Double payout!");
+            }
+            
             this.money += Math.floor(payout);
             
             // Vampiric perk: Heal $25 on wins
@@ -1592,6 +1604,17 @@ class CrackJack {
             
             this.winStreak++;
             this.totalWins++;
+            
+            // Check for tournament mode
+            if (this.tournamentMode) {
+                this.tournamentWins++;
+                if (this.tournamentWins >= this.tournamentGoal) {
+                    this.money += 500;
+                    this.showMessage("🏆 Tournament won! +$500!");
+                    this.tournamentMode = false;
+                    playSound('win');
+                }
+            }
             
             if (this.money >= this.escapeGoal) {
                 this.showVictoryScreen();
@@ -1604,9 +1627,20 @@ class CrackJack {
                 return;
             }
             
+            // Random event chance after wins (15% chance, not during boss fights)
+            if (!this.isBossFight && this.checkForRandomEvent()) {
+                return; // Event will handle continuation
+            }
+            
         } else if (playerWon === false) {
             this.timesLost++;
             this.winStreak = 0;
+            
+            // Reset tournament on loss
+            if (this.tournamentMode) {
+                this.showMessage("🎉 Tournament failed...");
+                this.tournamentMode = false;
+            }
             
             if (this.hasPerk('insurance') && Math.random() < 0.3) {
                 this.money += this.currentBet;
@@ -1685,6 +1719,345 @@ class CrackJack {
             Perks Collected: ${this.activePerks.length}
         `;
         this.victoryPopup.classList.remove('hidden');
+    }
+
+    // ============================================
+    // EVENT SYSTEM
+    // ============================================
+    
+    showRandomEvent() {
+        if (!this.eventPopup || typeof EVENTS === 'undefined' || EVENTS.length === 0) return;
+        
+        // Pick a random event
+        const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+        this.currentEvent = event;
+        
+        // Populate the popup
+        this.eventIcon.textContent = event.icon;
+        this.eventName.textContent = event.name;
+        this.eventDescription.textContent = event.desc;
+        
+        // Generate choice buttons
+        this.eventChoices.innerHTML = '';
+        event.choices.forEach((choice, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'event-choice-btn';
+            
+            // Check if player can afford this choice
+            const canAfford = this.canAffordEventChoice(choice);
+            
+            // Build button content
+            let costText = '';
+            if (choice.cost === 0 || choice.cost === null) {
+                costText = '<span class="choice-cost free">Free</span>';
+            } else if (choice.cost === 'perk') {
+                costText = '<span class="choice-cost">Costs: 1 Perk</span>';
+            } else if (choice.cost === 'curse') {
+                costText = '<span class="choice-cost">Costs: Gain a Curse</span>';
+            } else if (choice.cost === 'health') {
+                costText = `<span class="choice-cost">Costs: $${choice.costValue || 100}</span>`;
+            } else if (typeof choice.cost === 'number') {
+                costText = `<span class="choice-cost">Costs: $${choice.cost}</span>`;
+            }
+            
+            btn.innerHTML = `${choice.text}${costText}`;
+            btn.disabled = !canAfford;
+            btn.addEventListener('click', () => this.handleEventChoice(index));
+            this.eventChoices.appendChild(btn);
+        });
+        
+        // Show the popup
+        this.eventPopup.classList.remove('hidden');
+        playSound('event');
+    }
+    
+    canAffordEventChoice(choice) {
+        if (choice.cost === 0 || choice.cost === null) return true;
+        if (choice.cost === 'perk') return this.activePerks.length > 0;
+        if (choice.cost === 'curse') return true; // Can always take a curse
+        if (choice.cost === 'health') return this.money >= (choice.costValue || 100);
+        if (typeof choice.cost === 'number') return this.money >= choice.cost;
+        return true;
+    }
+    
+    handleEventChoice(choiceIndex) {
+        if (!this.currentEvent) return;
+        
+        const choice = this.currentEvent.choices[choiceIndex];
+        
+        // Pay the cost
+        if (choice.cost === 'perk' && this.activePerks.length > 0) {
+            // Remove a random perk
+            const removedIndex = Math.floor(Math.random() * this.activePerks.length);
+            const removedPerk = this.activePerks.splice(removedIndex, 1)[0];
+            this.showMessage(`Lost perk: ${removedPerk.icon} ${removedPerk.name}`);
+        } else if (choice.cost === 'curse') {
+            this.addRandomCurse();
+        } else if (choice.cost === 'health') {
+            this.money -= (choice.costValue || 100);
+        } else if (typeof choice.cost === 'number' && choice.cost > 0) {
+            this.money -= choice.cost;
+        }
+        
+        // Process the reward
+        if (choice.reward) {
+            this.processEventReward(choice.reward);
+        } else {
+            this.showMessage("You walked away...");
+        }
+        
+        // Update displays
+        this.moneyDisplay.textContent = `$${this.money}`;
+        this.updateRoguelikeDisplay();
+        
+        // Close the event popup
+        this.eventPopup.classList.add('hidden');
+        this.currentEvent = null;
+    }
+    
+    processEventReward(reward) {
+        switch (reward.type) {
+            case 'money':
+                let amount = reward.value;
+                if (reward.value === 'random') {
+                    amount = Math.floor(Math.random() * (reward.max - reward.min + 1)) + reward.min;
+                }
+                this.money += amount;
+                this.showMessage(`💰 Gained $${amount}!`);
+                playSound('win');
+                break;
+                
+            case 'perk':
+                this.grantRandomPerk(reward.value);
+                break;
+                
+            case 'relic':
+                this.grantRandomRelic();
+                break;
+                
+            case 'removeCurse':
+                if (this.activeCurses && this.activeCurses.length > 0) {
+                    const removedIndex = Math.floor(Math.random() * this.activeCurses.length);
+                    const removed = this.activeCurses.splice(removedIndex, 1)[0];
+                    this.showMessage(`✨ Curse removed: ${removed.name}`);
+                    playSound('heal');
+                } else {
+                    this.showMessage("No curses to remove... lucky you!");
+                }
+                break;
+                
+            case 'cursedRelic':
+                this.grantRandomRelic();
+                this.addRandomCurse();
+                this.showMessage("🗡️ Gained a relic... but at what cost?");
+                break;
+                
+            case 'blessing':
+                // Temporary boost - next hand pays double
+                this.blessingActive = true;
+                this.showMessage("🙏 Blessed! Next win pays double!");
+                playSound('heal');
+                break;
+                
+            case 'gamble':
+                this.processGambleReward(reward.value);
+                break;
+                
+            case 'cursedChest':
+                this.openCursedChest();
+                break;
+                
+            case 'bossReveal':
+                this.revealBossAbility();
+                break;
+                
+            case 'peekDeck':
+                this.peekAtDeck(reward.value);
+                break;
+                
+            case 'tournament':
+                // Mini tournament - win 3 hands in a row for big reward
+                this.startMiniTournament();
+                break;
+                
+            case 'event':
+                // Trigger another random event
+                setTimeout(() => this.showRandomEvent(), 500);
+                break;
+                
+            default:
+                this.showMessage("Something mysterious happened...");
+        }
+    }
+    
+    grantRandomPerk(rarity = 'random') {
+        const availablePerks = this.allPerks.filter(p => !this.hasPerk(p.id));
+        if (availablePerks.length === 0) {
+            this.money += 100;
+            this.showMessage("No perks available - got $100 instead!");
+            return;
+        }
+        
+        let pool = availablePerks;
+        if (rarity !== 'random') {
+            pool = availablePerks.filter(p => p.rarity === rarity);
+            if (pool.length === 0) pool = availablePerks;
+        }
+        
+        const perk = pool[Math.floor(Math.random() * pool.length)];
+        const newPerk = { ...perk };
+        if (newPerk.maxUses) newPerk.uses = newPerk.maxUses;
+        this.activePerks.push(newPerk);
+        this.showMessage(`🎁 Gained perk: ${perk.icon} ${perk.name}!`);
+        playSound('upgrade');
+    }
+    
+    grantRandomRelic() {
+        if (typeof RELICS === 'undefined' || RELICS.length === 0) {
+            this.money += 150;
+            this.showMessage("No relics available - got $150 instead!");
+            return;
+        }
+        
+        const availableRelics = RELICS.filter(r => !this.activeRelics?.some(ar => ar.id === r.id));
+        if (availableRelics.length === 0) {
+            this.money += 150;
+            this.showMessage("All relics collected - got $150 instead!");
+            return;
+        }
+        
+        const relic = availableRelics[Math.floor(Math.random() * availableRelics.length)];
+        if (!this.activeRelics) this.activeRelics = [];
+        this.activeRelics.push({ ...relic });
+        this.showMessage(`🏆 Found relic: ${relic.icon} ${relic.name}!`);
+        playSound('treasure');
+    }
+    
+    addRandomCurse() {
+        if (typeof CURSES === 'undefined' || CURSES.length === 0) return;
+        
+        const availableCurses = CURSES.filter(c => !this.activeCurses?.some(ac => ac.id === c.id));
+        if (availableCurses.length === 0) {
+            this.showMessage("Already fully cursed!");
+            return;
+        }
+        
+        const curse = availableCurses[Math.floor(Math.random() * availableCurses.length)];
+        if (!this.activeCurses) this.activeCurses = [];
+        this.activeCurses.push({ ...curse });
+        this.showMessage(`💀 Cursed: ${curse.icon} ${curse.name}!`);
+        playSound('curse');
+    }
+    
+    processGambleReward(gambleType) {
+        const roll = Math.random();
+        
+        switch (gambleType) {
+            case 'highCard':
+                // 50% chance to win $200, otherwise lose
+                if (roll > 0.5) {
+                    this.money += 200;
+                    this.showMessage("🎴 High card wins! +$200!");
+                    playSound('win');
+                } else {
+                    this.showMessage("🎴 Low card... you lose!");
+                    playSound('lose');
+                }
+                break;
+                
+            case 'suitMatch':
+                // 25% chance to win $150
+                if (roll > 0.75) {
+                    this.money += 150;
+                    this.showMessage("♠️ Suit matched! +$150!");
+                    playSound('win');
+                } else {
+                    this.showMessage("♦️ Wrong suit!");
+                    playSound('lose');
+                }
+                break;
+                
+            case 'easyWin':
+                // 75% chance to win against drunk gambler
+                if (roll > 0.25) {
+                    this.money += 300;
+                    this.showMessage("🍺 Easy money! +$300!");
+                    playSound('win');
+                } else {
+                    this.showMessage("🍺 He got lucky!");
+                    playSound('lose');
+                }
+                break;
+                
+            default:
+                if (roll > 0.5) {
+                    this.money += 100;
+                    this.showMessage("Won the gamble! +$100");
+                    playSound('win');
+                } else {
+                    this.showMessage("Lost the gamble!");
+                    playSound('lose');
+                }
+        }
+    }
+    
+    openCursedChest() {
+        const roll = Math.random();
+        
+        if (roll > 0.6) {
+            // 40% - Great reward
+            this.grantRandomRelic();
+            this.showMessage("📦 The chest contained treasure!");
+        } else if (roll > 0.3) {
+            // 30% - Decent reward + curse
+            this.money += 200;
+            this.addRandomCurse();
+            this.showMessage("📦 Gold and a curse!");
+        } else {
+            // 30% - Mimic!
+            this.money = Math.max(0, this.money - 150);
+            this.showMessage("📦 MIMIC! Lost $150!");
+            playSound('lose');
+        }
+    }
+    
+    revealBossAbility() {
+        const bossIndex = Math.min(this.currentFloor - 1, BOSSES.length - 1);
+        const boss = BOSSES[bossIndex];
+        if (boss) {
+            this.showMessage(`🔮 Next boss: ${boss.name} - ${boss.rule}`);
+        } else {
+            this.showMessage("🔮 The future is unclear...");
+        }
+    }
+    
+    peekAtDeck(count) {
+        if (this.deck.length < count) {
+            this.showMessage(`🃏 Deck has only ${this.deck.length} cards left!`);
+            return;
+        }
+        
+        const nextCards = this.deck.slice(0, count);
+        const cardStr = nextCards.map(c => `${c.value}${c.suit}`).join(', ');
+        this.showMessage(`🃏 Next ${count} cards: ${cardStr}`);
+    }
+    
+    startMiniTournament() {
+        // Set tournament mode - track consecutive wins
+        this.tournamentMode = true;
+        this.tournamentWins = 0;
+        this.tournamentGoal = 3;
+        this.showMessage("🎉 Tournament! Win 3 hands for $500 bonus!");
+    }
+    
+    // Check and potentially trigger random event (call after wins)
+    checkForRandomEvent() {
+        // 15% chance of event after each win
+        if (Math.random() < 0.15) {
+            setTimeout(() => this.showRandomEvent(), 1000);
+            return true;
+        }
+        return false;
     }
 
     updateRoguelikeDisplay() {

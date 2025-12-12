@@ -288,3 +288,154 @@ function loadCustomMusic(file) {
     console.log('%c🎵 Custom music loaded: ' + file.name, 'color: gold;');
 }
 
+// ===== ADDITIONAL SOUND EFFECTS =====
+
+function playEventSound() {
+    if (!sfxEnabled) return;
+    const ctx = getAudioContext();
+    
+    // Mystical chime sound
+    const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.type = 'sine';
+    osc2.type = 'triangle';
+    osc.frequency.setValueAtTime(523, ctx.currentTime); // C5
+    osc2.frequency.setValueAtTime(659, ctx.currentTime); // E5
+    
+    gain.gain.setValueAtTime(masterVolume * 0.15, ctx.currentTime);
+    gain.gain.exponentialDecayTo = 0.01;
+    gain.gain.setValueAtTime(masterVolume * 0.15, ctx.currentTime);
+    gain.gain.exponentialDecayTo = 0.01;
+    
+    osc.start(ctx.currentTime);
+    osc2.start(ctx.currentTime + 0.1);
+    
+    gain.gain.exponentialDecayTo = 0.001;
+    gain.gain.setTargetAtTime(0.001, ctx.currentTime + 0.3, 0.1);
+    
+    osc.stop(ctx.currentTime + 0.5);
+    osc2.stop(ctx.currentTime + 0.6);
+}
+
+function playHealSound() {
+    if (!sfxEnabled) return;
+    const ctx = getAudioContext();
+    
+    // Sparkle heal sound
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.2);
+    
+    gain.gain.setValueAtTime(masterVolume * 0.1, ctx.currentTime);
+    gain.gain.setTargetAtTime(0.001, ctx.currentTime + 0.2, 0.05);
+    
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+}
+
+function playUpgradeSound() {
+    if (!sfxEnabled) return;
+    const ctx = getAudioContext();
+    
+    // Triumphant upgrade sound
+    [523, 659, 784].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        
+        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.1);
+        gain.gain.linearRampToValueAtTime(masterVolume * 0.08, ctx.currentTime + i * 0.1 + 0.05);
+        gain.gain.setTargetAtTime(0.001, ctx.currentTime + i * 0.1 + 0.15, 0.05);
+        
+        osc.start(ctx.currentTime + i * 0.1);
+        osc.stop(ctx.currentTime + i * 0.1 + 0.3);
+    });
+}
+
+function playTreasureSound() {
+    if (!sfxEnabled) return;
+    const ctx = getAudioContext();
+    
+    // Coin jingle
+    [880, 988, 1175, 1319].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        
+        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.08);
+        gain.gain.linearRampToValueAtTime(masterVolume * 0.1, ctx.currentTime + i * 0.08 + 0.02);
+        gain.gain.setTargetAtTime(0.001, ctx.currentTime + i * 0.08 + 0.1, 0.03);
+        
+        osc.start(ctx.currentTime + i * 0.08);
+        osc.stop(ctx.currentTime + i * 0.08 + 0.2);
+    });
+}
+
+function playCurseSound() {
+    if (!sfxEnabled) return;
+    const ctx = getAudioContext();
+    
+    // Ominous curse sound
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.4);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(800, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.4);
+    
+    gain.gain.setValueAtTime(masterVolume * 0.12, ctx.currentTime);
+    gain.gain.setTargetAtTime(0.001, ctx.currentTime + 0.3, 0.1);
+    
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+}
+
+// Generic playSound function for event system
+function playSound(type) {
+    switch(type) {
+        case 'event': playEventSound(); break;
+        case 'win': playWinSound(); break;
+        case 'lose': playLoseSound(); break;
+        case 'heal': playHealSound(); break;
+        case 'upgrade': playUpgradeSound(); break;
+        case 'treasure': playTreasureSound(); break;
+        case 'curse': playCurseSound(); break;
+        case 'chip': playChipSound(); break;
+        case 'card': playCardDealSound(); break;
+        case 'flip': playCardFlipSound(); break;
+        case 'shuffle': playShuffleSound(); break;
+        default: playClickSound();
+    }
+}
+

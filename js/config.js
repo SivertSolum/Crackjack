@@ -3,12 +3,12 @@
 
 // Version and Changelog
 const VERSION = {
-    number: '1.0.0',
-    date: '2024-12-10',
+    number: '1.0.6',
+    date: '2025-12-10',
     changelog: [
         {
             version: '1.0.0',
-            date: '2024-12-10',
+            date: '2025-12-10',
             title: 'Initial Release',
             changes: [
                 'Full roguelike blackjack experience with 7 floors',
@@ -25,7 +25,7 @@ const VERSION = {
 };
 
 const CONFIG = {
-    STARTING_MONEY: 1000,
+    STARTING_MONEY: 100,
     ESCAPE_GOAL: 10000,
     SHUFFLE_THRESHOLD: 20,
     
