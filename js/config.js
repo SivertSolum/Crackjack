@@ -61,21 +61,21 @@ const ROOM_WEIGHTS = {
 
 // Perks - can be purchased or selected after wins
 const PERKS = [
-    { id: 'peek', name: 'X-Ray Vision', icon: '👁️', desc: "See dealer's hidden card once per floor", uses: 1, maxUses: 1, cost: 3200, rarity: 'rare' },
-    { id: 'lucky7', name: 'Lucky 7s', icon: '🍀', desc: '7s count as 8 for you', passive: true, cost: 2400, rarity: 'common' },
-    { id: 'insurance', name: 'Insurance Fraud', icon: '💰', desc: '30% chance to get bet back on loss', passive: true, cost: 4000, rarity: 'uncommon' },
-    { id: 'counter', name: 'Card Counter', icon: '🧠', desc: 'Shows bust probability', passive: true, cost: 1600, rarity: 'common' },
-    { id: 'luckyCharm', name: 'Lucky Charm', icon: '🍀', desc: '+5% chance to win ties', passive: true, cost: 4800, rarity: 'rare' },
-    { id: 'secondChance', name: 'Second Chance', icon: '🔄', desc: 'Undo last hit once per floor', uses: 1, maxUses: 1, cost: 3200, rarity: 'uncommon' },
-    { id: 'doubleOrNothing', name: 'High Roller', icon: '🎲', desc: 'Wins pay 1.3x', passive: true, cost: 5600, rarity: 'rare' },
-    { id: 'shield', name: 'Soul Shield', icon: '🛡️', desc: 'Survive one bust per floor', uses: 1, maxUses: 1, cost: 4000, rarity: 'uncommon' },
-    { id: 'thief', name: 'Pickpocket', icon: '🤏', desc: 'Steal $75 on dealer bust', passive: true, cost: 2400, rarity: 'common' },
-    { id: 'meditation', name: 'Zen Mind', icon: '🧘', desc: 'Gain $30 at start of each hand', passive: true, cost: 3200, rarity: 'uncommon' },
-    { id: 'quickDraw', name: 'Quick Draw', icon: '⚡', desc: 'First hit each hand can\'t bust you', passive: true, cost: 6400, rarity: 'rare' },
-    { id: 'greed', name: 'Greed', icon: '💎', desc: 'Blackjack pays 3x instead of 2.5x', passive: true, cost: 4800, rarity: 'uncommon' },
-    { id: 'vampiric', name: 'Vampiric Touch', icon: '🧛', desc: 'Heal $25 on wins', passive: true, cost: 3200, rarity: 'common' },
-    { id: 'lastStand', name: 'Last Stand', icon: '💪', desc: 'Win rate +20% when under $200', passive: true, cost: 2400, rarity: 'common' },
-    { id: 'doubleDown', name: 'Double Agent', icon: '🕵️', desc: 'Double down costs only 50% extra', passive: true, cost: 4000, rarity: 'uncommon' }
+    { id: 'peek', name: 'X-Ray Vision', icon: '👁️', desc: "See dealer's hidden card once per floor", uses: 1, maxUses: 1, cost: 320, rarity: 'rare' },
+    { id: 'lucky7', name: 'Lucky 7s', icon: '🍀', desc: '7s count as 8 for you', passive: true, cost: 240, rarity: 'common' },
+    { id: 'insurance', name: 'Insurance Fraud', icon: '💰', desc: '30% chance to get bet back on loss', passive: true, cost: 400, rarity: 'uncommon' },
+    { id: 'counter', name: 'Card Counter', icon: '🧠', desc: 'Shows bust probability', passive: true, cost: 160, rarity: 'common' },
+    { id: 'luckyCharm', name: 'Lucky Charm', icon: '🍀', desc: '+5% chance to win ties', passive: true, cost: 480, rarity: 'rare' },
+    { id: 'secondChance', name: 'Second Chance', icon: '🔄', desc: 'Undo last hit once per floor', uses: 1, maxUses: 1, cost: 320, rarity: 'uncommon' },
+    { id: 'doubleOrNothing', name: 'High Roller', icon: '🎲', desc: 'Wins pay 1.3x', passive: true, cost: 560, rarity: 'rare' },
+    { id: 'shield', name: 'Soul Shield', icon: '🛡️', desc: 'Survive one bust per floor', uses: 1, maxUses: 1, cost: 400, rarity: 'uncommon' },
+    { id: 'thief', name: 'Pickpocket', icon: '🤏', desc: 'Steal $75 on dealer bust', passive: true, cost: 240, rarity: 'common' },
+    { id: 'meditation', name: 'Zen Mind', icon: '🧘', desc: 'Gain $30 at start of each hand', passive: true, cost: 320, rarity: 'uncommon' },
+    { id: 'quickDraw', name: 'Quick Draw', icon: '⚡', desc: 'First hit each hand can\'t bust you', passive: true, cost: 640, rarity: 'rare' },
+    { id: 'greed', name: 'Greed', icon: '💎', desc: 'Blackjack pays 3x instead of 2.5x', passive: true, cost: 480, rarity: 'uncommon' },
+    { id: 'vampiric', name: 'Vampiric Touch', icon: '🧛', desc: 'Heal $25 on wins', passive: true, cost: 320, rarity: 'common' },
+    { id: 'lastStand', name: 'Last Stand', icon: '💪', desc: 'Win rate +20% when under $200', passive: true, cost: 240, rarity: 'common' },
+    { id: 'doubleDown', name: 'Double Agent', icon: '🕵️', desc: 'Double down costs only 50% extra', passive: true, cost: 400, rarity: 'uncommon' }
 ];
 
 // Side Bet Perks - unlocked via side bet milestones

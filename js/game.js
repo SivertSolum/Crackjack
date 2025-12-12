@@ -96,6 +96,10 @@ class CrackJack {
         this.playerHandEl = document.getElementById('player-hand');
         this.dealerScoreEl = document.getElementById('dealer-score');
         this.playerScoreEl = document.getElementById('player-score');
+        this.bustProbabilityEl = document.getElementById('bust-probability');
+        this.perkTooltip = document.getElementById('perk-tooltip');
+        this.perkTooltipName = document.getElementById('perk-tooltip-name');
+        this.perkTooltipDesc = document.getElementById('perk-tooltip-desc');
         this.messageEl = document.getElementById('message');
         this.bettingControls = document.getElementById('betting-controls');
         this.gameControls = document.getElementById('game-controls');
@@ -431,6 +435,59 @@ class CrackJack {
         return score;
     }
 
+    calculateBustProbability() {
+        // Calculate probability of busting if we hit
+        const currentScore = this.calculateScore(this.playerHand, true);
+        if (currentScore >= 21) return 100;
+        
+        const bustThreshold = 21 - currentScore;
+        let bustCards = 0;
+        let totalCards = this.deck.length;
+        
+        if (totalCards === 0) return 0;
+        
+        for (let card of this.deck) {
+            let cardValue;
+            if (card.value === 'A') {
+                cardValue = 1; // Ace can be 1 when you'd bust
+            } else if (['J', 'Q', 'K'].includes(card.value)) {
+                cardValue = 10;
+            } else if (card.value === '7' && this.hasPerk('lucky7')) {
+                cardValue = 8;
+            } else {
+                cardValue = parseInt(card.value);
+            }
+            
+            if (cardValue > bustThreshold) {
+                bustCards++;
+            }
+        }
+        
+        return Math.round((bustCards / totalCards) * 100);
+    }
+
+    updateBustProbability() {
+        if (!this.bustProbabilityEl) return;
+        
+        // Only show if player has the Card Counter perk and game is in progress
+        if (!this.hasPerk('counter') || !this.gameInProgress || this.playerHand.length === 0) {
+            this.bustProbabilityEl.classList.add('hidden');
+            return;
+        }
+        
+        const probability = this.calculateBustProbability();
+        this.bustProbabilityEl.textContent = `🧠 Bust: ${probability}%`;
+        this.bustProbabilityEl.classList.remove('hidden', 'low-risk', 'medium-risk', 'high-risk');
+        
+        if (probability <= 30) {
+            this.bustProbabilityEl.classList.add('low-risk');
+        } else if (probability <= 60) {
+            this.bustProbabilityEl.classList.add('medium-risk');
+        } else {
+            this.bustProbabilityEl.classList.add('high-risk');
+        }
+    }
+
     getRandomSuit() {
         return this.suits[Math.floor(Math.random() * this.suits.length)];
     }
@@ -503,7 +560,7 @@ class CrackJack {
 
         playChipSound();
         this.currentBet = bet;
-        this.currentBetDisplay.textContent = `$${bet}`;
+        if (this.currentBetDisplay) this.currentBetDisplay.textContent = `$${bet}`;
         this.dealBtn.disabled = false;
         
         if (amount === 'all') {
@@ -530,7 +587,7 @@ class CrackJack {
             this.currentBet = this.lastBet;
         }
 
-        this.currentBetDisplay.textContent = `$${this.currentBet}`;
+        if (this.currentBetDisplay) this.currentBetDisplay.textContent = `$${this.currentBet}`;
         this.deal();
     }
 
@@ -562,13 +619,32 @@ class CrackJack {
         if (this.gameInProgress) return;
         if (this.isPopupOpen()) return;
         
-        const chipValue = this.selectedChipValue;
+        let chipValue = this.selectedChipValue;
         
         // Check if player has enough money
         const totalBets = this.currentBet + this.sideBetPP + this.sideBet21Plus3;
-        if (totalBets + chipValue > this.money) {
-            this.showMessage("Not enough chips! You can't bet what you don't have.");
-            return;
+        const availableMoney = this.money - totalBets;
+        
+        if (chipValue > availableMoney) {
+            // Auto-select the highest affordable chip
+            const chipValues = [500, 100, 25, 10, 5, 1];
+            const affordableChip = chipValues.find(v => v <= availableMoney);
+            
+            if (!affordableChip) {
+                this.showMessage("Not enough chips! You can't bet what you don't have.");
+                return;
+            }
+            
+            // Select the affordable chip
+            chipValue = affordableChip;
+            this.selectedChipValue = chipValue;
+            
+            // Update chip UI selection
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+            const newChipEl = document.querySelector(`.chip[data-value="${chipValue}"]`);
+            if (newChipEl) {
+                newChipEl.classList.add('selected');
+            }
         }
         
         // Add chip to appropriate area
@@ -577,6 +653,7 @@ class CrackJack {
             this.betHistory.push({ type: 'main', value: chipValue });
             this.renderChipStack(this.mainChipStack, this.currentBet);
             this.mainBetTotal.textContent = `$${this.currentBet}`;
+            if (this.currentBetDisplay) this.currentBetDisplay.textContent = `$${this.currentBet}`;
         } else if (areaType === 'pp') {
             this.sideBetPP += chipValue;
             this.betHistory.push({ type: 'pp', value: chipValue });
@@ -643,6 +720,7 @@ class CrackJack {
             this.currentBet -= lastBet.value;
             this.renderChipStack(this.mainChipStack, this.currentBet);
             this.mainBetTotal.textContent = `$${this.currentBet}`;
+            if (this.currentBetDisplay) this.currentBetDisplay.textContent = `$${this.currentBet}`;
         } else if (lastBet.type === 'pp') {
             this.sideBetPP -= lastBet.value;
             this.renderChipStack(this.ppChipStack, this.sideBetPP);
@@ -675,6 +753,7 @@ class CrackJack {
         if (this.mainBetTotal) this.mainBetTotal.textContent = '$0';
         if (this.ppBetTotal) this.ppBetTotal.textContent = '$0';
         if (this.plus3BetTotal) this.plus3BetTotal.textContent = '$0';
+        if (this.currentBetDisplay) this.currentBetDisplay.textContent = '$0';
         
         this.updateBettingButtons();
         this.showMessage("All bets cleared. Starting fresh!");
@@ -702,6 +781,7 @@ class CrackJack {
         this.betHistory.push({ type: 'main', value: this.lastBet });
         this.renderChipStack(this.mainChipStack, this.currentBet);
         if (this.mainBetTotal) this.mainBetTotal.textContent = `$${this.currentBet}`;
+        if (this.currentBetDisplay) this.currentBetDisplay.textContent = `$${this.currentBet}`;
         
         // Place PP side bet if there was one
         if (this.lastSideBetPP > 0) {
@@ -918,7 +998,9 @@ class CrackJack {
             return;
         }
 
-        this.doubleBtn.disabled = this.money < this.currentBet;
+        // Double Agent perk: Double down costs only 50% extra
+        const doubleCost = this.hasPerk('doubleDown') ? Math.floor(this.currentBet * 0.5) : this.currentBet;
+        this.doubleBtn.disabled = this.money < doubleCost;
         
         // Reset split state
         this.isSplitHand = false;
@@ -934,6 +1016,7 @@ class CrackJack {
         
         this.showMessage("Your move, genius. 🤔");
         this.updateScores(true);
+        this.updateBustProbability();
     }
 
     async animateDeal() {
@@ -989,8 +1072,22 @@ class CrackJack {
 
         const score = this.calculateScore(this.playerHand, true);
         this.updateScores(true);
+        this.updateBustProbability();
 
         if (score > 21) {
+            // Quick Draw perk: First hit each hand can't bust you
+            const isFirstHit = this.playerHand.length === 3; // 2 initial + 1 hit
+            if (isFirstHit && this.hasPerk('quickDraw')) {
+                this.playerHand.pop();
+                this.playerHandEl.removeChild(cardEl);
+                this.updateScores(true);
+                this.showMessage("⚡ Quick Draw saved you from busting! (First hit protection)", 'win');
+                this.isProcessingAction = false;
+                this.hitBtn.disabled = false;
+                return;
+            }
+            
+            // Soul Shield perk
             const shield = this.getPerk('shield');
             if (shield && shield.uses > 0) {
                 shield.uses--;
@@ -1061,7 +1158,9 @@ class CrackJack {
     }
 
     async double() {
-        if (!this.gameInProgress || this.money < this.currentBet) return;
+        // Double Agent perk: Double down costs only 50% extra
+        const doubleCost = this.hasPerk('doubleDown') ? Math.floor(this.currentBet * 0.5) : this.currentBet;
+        if (!this.gameInProgress || this.money < doubleCost) return;
         if (this.isPopupOpen()) return;
         if (this.isProcessingAction) return;
         
@@ -1071,36 +1170,97 @@ class CrackJack {
         this.doubleBtn.disabled = true;
         if (this.splitBtn) this.splitBtn.disabled = true;
 
-        this.money -= this.currentBet;
-        this.currentBet *= 2;
-        this.currentBetDisplay.textContent = `$${this.currentBet}`;
-        this.updateDisplay();
-
-        this.showMessage("Doubling down? Bold move, cotton. 💀");
-
-        const card = this.drawCard();
-        this.playerHand.push(card);
-        playCardDealSound();
-        this.playerHandEl.appendChild(this.createCardElement(card));
-        
-        await this.delay(400);
-        
-        const score = this.calculateScore(this.playerHand, true);
-        this.updateScores(true);
-
-        if (score > 21) {
-            const cardEl = this.playerHandEl.lastChild;
-            cardEl.classList.add('rigged');
-            playLoseSound();
-            this.showMessage(this.getRandomMessage(this.bustMessages) + " (2x pain!)", 'lose');
-            await this.revealDealerCard();
-            const dealerScore = this.calculateScore(this.dealerHand);
-            this.addToHistory(score, dealerScore, 'loss');
-            this.endRound(false);
+        // Double Agent perk: Double down costs only 50% extra
+        let doubleAmount = this.currentBet;
+        if (this.hasPerk('doubleDown')) {
+            doubleAmount = Math.floor(this.currentBet * 0.5);
+            this.showMessage("🕵️ Double Agent: Only costs 50% extra! Bold move!");
         } else {
-            // After doubling, player must stand - dealer plays
-            this.isProcessingAction = false;
-            await this.stand();
+            this.showMessage("Doubling down? Bold move, cotton. 💀");
+        }
+        
+        this.money -= doubleAmount;
+        
+        // Handle split hands differently
+        if (this.isSplitHand) {
+            // Double the bet for the current split hand
+            this.splitBets[this.currentSplitHandIndex] += doubleAmount;
+            this.updateDisplay();
+            
+            const card = this.drawCard();
+            this.splitHands[this.currentSplitHandIndex].push(card);
+            playCardDealSound();
+            this.renderSplitHands(this.currentSplitHandIndex);
+            
+            await this.delay(400);
+            
+            const score = this.calculateScore(this.splitHands[this.currentSplitHandIndex], true);
+            this.updateSplitScores();
+            
+            if (score > 21) {
+                playLoseSound();
+                this.showMessage(`Hand ${this.currentSplitHandIndex + 1} BUSTS on double! 💥 (2x pain!)`);
+                await this.delay(500);
+                
+                // Move to next hand or resolve
+                if (this.currentSplitHandIndex === 0) {
+                    this.currentSplitHandIndex = 1;
+                    this.renderSplitHands();
+                    this.showMessage("Now playing Hand 2...");
+                    this.hitBtn.disabled = false;
+                    this.standBtn.disabled = false;
+                    this.doubleBtn.disabled = false;
+                    this.isProcessingAction = false;
+                } else {
+                    await this.resolveSplitHands();
+                }
+            } else {
+                // After doubling, must stand - move to next hand or resolve
+                this.showMessage(`Hand ${this.currentSplitHandIndex + 1} doubles and stands with ${score}.`);
+                await this.delay(500);
+                
+                if (this.currentSplitHandIndex === 0) {
+                    this.currentSplitHandIndex = 1;
+                    this.renderSplitHands();
+                    this.showMessage("Now playing Hand 2...");
+                    this.hitBtn.disabled = false;
+                    this.standBtn.disabled = false;
+                    this.doubleBtn.disabled = false;
+                    this.isProcessingAction = false;
+                } else {
+                    await this.resolveSplitHands();
+                }
+            }
+        } else {
+            // Normal (non-split) double down
+            this.currentBet += doubleAmount;
+            if (this.currentBetDisplay) this.currentBetDisplay.textContent = `$${this.currentBet}`;
+            this.updateDisplay();
+
+            const card = this.drawCard();
+            this.playerHand.push(card);
+            playCardDealSound();
+            this.playerHandEl.appendChild(this.createCardElement(card));
+            
+            await this.delay(400);
+            
+            const score = this.calculateScore(this.playerHand, true);
+            this.updateScores(true);
+
+            if (score > 21) {
+                const cardEl = this.playerHandEl.lastChild;
+                cardEl.classList.add('rigged');
+                playLoseSound();
+                this.showMessage(this.getRandomMessage(this.bustMessages) + " (2x pain!)", 'lose');
+                await this.revealDealerCard();
+                const dealerScore = this.calculateScore(this.dealerHand);
+                this.addToHistory(score, dealerScore, 'loss');
+                this.endRound(false);
+            } else {
+                // After doubling, player must stand - dealer plays
+                this.isProcessingAction = false;
+                await this.stand();
+            }
         }
     }
 
@@ -1342,7 +1502,13 @@ class CrackJack {
 
         if (dealerScore > 21) {
             playWinSound();
-            this.showMessage(this.getRandomMessage(this.winMessages), 'win');
+            // Thief perk: steal extra money on dealer bust
+            if (this.hasPerk('thief')) {
+                this.money += 75;
+                this.showMessage(this.getRandomMessage(this.winMessages) + " 🤏 Pickpocket: +$75!", 'win');
+            } else {
+                this.showMessage(this.getRandomMessage(this.winMessages), 'win');
+            }
             this.addToHistory(playerScore, dealerScore, 'win');
             this.endRound(true);
         } else if (dealerScore === 21 && dealerCardCount > 2) {
@@ -1393,14 +1559,23 @@ class CrackJack {
         this.gameInProgress = false;
         this.handsPlayed++;
         this.commitPlayedCards();
+        
+        // Hide bust probability
+        if (this.bustProbabilityEl) this.bustProbabilityEl.classList.add('hidden');
 
         let payout = 0;
         
         if (playerWon === true) {
-            payout = isBlackjack ? this.currentBet * 2.5 : this.currentBet * 2;
+            // Greed perk: Blackjack pays 3x instead of 2.5x
+            if (isBlackjack && this.hasPerk('greed')) {
+                payout = this.currentBet * 3;
+            } else {
+                payout = isBlackjack ? this.currentBet * 2.5 : this.currentBet * 2;
+            }
             
+            // High Roller perk: Wins pay 1.5x (actually 1.3x based on config)
             if (this.hasPerk('doubleOrNothing')) {
-                payout *= 1.5;
+                payout *= 1.3;
             }
             
             if (this.isBossFight && this.currentBoss?.multiplierWin) {
@@ -1408,6 +1583,13 @@ class CrackJack {
             }
             
             this.money += Math.floor(payout);
+            
+            // Vampiric perk: Heal $25 on wins
+            if (this.hasPerk('vampiric')) {
+                this.money += 25;
+                this.showMessage("🧛 Vampiric Touch: +$25!");
+            }
+            
             this.winStreak++;
             this.totalWins++;
             
@@ -1514,8 +1696,74 @@ class CrackJack {
             this.activeUpgradesEl.innerHTML = 'None yet...';
         } else {
             this.activeUpgradesEl.innerHTML = this.activePerks.map(p => 
-                `<span class="perk-badge">${p.icon} ${p.name}${p.maxUses ? ` (${p.uses})` : ''}</span>`
+                `<span class="perk-badge" data-perk-id="${p.id}" data-perk-name="${p.icon} ${p.name}" data-perk-desc="${p.desc}">${p.icon} ${p.name}${p.maxUses ? ` (${p.uses})` : ''}</span>`
             ).join('');
+            
+            // Add hover listeners for tooltips
+            this.setupPerkTooltips();
+        }
+    }
+    
+    setupPerkTooltips() {
+        if (!this.perkTooltip) return;
+        
+        const perkBadges = this.activeUpgradesEl.querySelectorAll('.perk-badge[data-perk-id]');
+        perkBadges.forEach(badge => {
+            badge.addEventListener('mouseenter', (e) => this.showPerkTooltip(e, badge));
+            badge.addEventListener('mouseleave', () => this.hidePerkTooltip());
+        });
+    }
+    
+    showPerkTooltip(e, badge) {
+        if (!this.perkTooltip) return;
+        
+        const name = badge.getAttribute('data-perk-name');
+        const desc = badge.getAttribute('data-perk-desc');
+        
+        this.perkTooltipName.textContent = name;
+        this.perkTooltipDesc.textContent = desc;
+        this.perkTooltip.classList.remove('hidden');
+        
+        this.positionPerkTooltip(badge);
+    }
+    
+    positionPerkTooltip(badge) {
+        if (!this.perkTooltip || this.perkTooltip.classList.contains('hidden')) return;
+        
+        // Get badge position in viewport
+        const rect = badge.getBoundingClientRect();
+        
+        // Position tooltip centered above the badge
+        const x = rect.left + rect.width / 2;
+        const y = rect.top;
+        
+        this.perkTooltip.style.left = `${x}px`;
+        this.perkTooltip.style.top = `${y}px`;
+        
+        // Check if tooltip would go off screen at top
+        const tooltipRect = this.perkTooltip.getBoundingClientRect();
+        if (tooltipRect.top < 10) {
+            // Position below instead
+            this.perkTooltip.style.top = `${rect.bottom + 15}px`;
+            this.perkTooltip.style.transform = 'translate(-50%, 0)';
+        } else {
+            this.perkTooltip.style.transform = 'translate(-50%, -100%)';
+        }
+        
+        // Check horizontal bounds
+        const leftOverflow = tooltipRect.left < 10;
+        const rightOverflow = tooltipRect.right > window.innerWidth - 10;
+        
+        if (leftOverflow) {
+            this.perkTooltip.style.left = `${tooltipRect.width / 2 + 10}px`;
+        } else if (rightOverflow) {
+            this.perkTooltip.style.left = `${window.innerWidth - tooltipRect.width / 2 - 10}px`;
+        }
+    }
+    
+    hidePerkTooltip() {
+        if (this.perkTooltip) {
+            this.perkTooltip.classList.add('hidden');
         }
     }
 
@@ -1617,8 +1865,15 @@ class CrackJack {
             this.shopActivePerksListEl.innerHTML = 'None yet...';
         } else {
             this.shopActivePerksListEl.innerHTML = this.activePerks.map(p => 
-                `<span class="perk-badge">${p.icon} ${p.name}</span>`
+                `<span class="perk-badge" data-perk-id="${p.id}" data-perk-name="${p.icon} ${p.name}" data-perk-desc="${p.desc}">${p.icon} ${p.name}</span>`
             ).join(' ');
+            
+            // Add hover listeners for tooltips in shop
+            const perkBadges = this.shopActivePerksListEl.querySelectorAll('.perk-badge[data-perk-id]');
+            perkBadges.forEach(badge => {
+                badge.addEventListener('mouseenter', (e) => this.showPerkTooltip(e, badge));
+                badge.addEventListener('mouseleave', () => this.hidePerkTooltip());
+            });
         }
     }
 
@@ -1706,7 +1961,9 @@ class CrackJack {
             
             hand.forEach((card, cardIndex) => {
                 const cardEl = this.createCardElement(card);
-                // Only animate the last card of the animating hand
+                // Remove dealing class from all cards by default
+                cardEl.classList.remove('dealing');
+                // Only animate the last card of the hand being played
                 if (handIndex === animateHandIndex && cardIndex === hand.length - 1) {
                     cardEl.classList.add('dealing');
                 }
@@ -1841,6 +2098,7 @@ class CrackJack {
         if (this.mainBetTotal) this.mainBetTotal.textContent = '$0';
         if (this.ppBetTotal) this.ppBetTotal.textContent = '$0';
         if (this.plus3BetTotal) this.plus3BetTotal.textContent = '$0';
+        if (this.currentBetDisplay) this.currentBetDisplay.textContent = '$0';
         
         // Update buttons
         this.updateBettingButtons();
@@ -1983,21 +2241,21 @@ class CrackJack {
         this.isBossFight = false;
         this.currentBoss = null;
 
-        this.brokePopup.classList.add('hidden');
+        if (this.brokePopup) this.brokePopup.classList.add('hidden');
         if (this.postRoundPopup) this.postRoundPopup.classList.add('hidden');
         if (this.floorCompletePopup) this.floorCompletePopup.classList.add('hidden');
-        this.victoryPopup.classList.add('hidden');
-        this.upgradePopup.classList.add('hidden');
-        this.bossPopup.classList.add('hidden');
+        if (this.victoryPopup) this.victoryPopup.classList.add('hidden');
+        if (this.upgradePopup) this.upgradePopup.classList.add('hidden');
+        if (this.bossPopup) this.bossPopup.classList.add('hidden');
         if (this.eventPopup) this.eventPopup.classList.add('hidden');
         if (this.shopPopup) this.shopPopup.classList.add('hidden');
         if (this.preRoundShopPopup) this.preRoundShopPopup.classList.add('hidden');
-        this.rebetSection.classList.add('hidden');
-        this.tableEl.classList.remove('boss-mode');
-        this.dealerHandEl.innerHTML = '';
-        this.playerHandEl.innerHTML = '';
-        this.dealerScoreEl.textContent = '';
-        this.playerScoreEl.textContent = '';
+        if (this.rebetSection) this.rebetSection.classList.add('hidden');
+        if (this.tableEl) this.tableEl.classList.remove('boss-mode');
+        if (this.dealerHandEl) this.dealerHandEl.innerHTML = '';
+        if (this.playerHandEl) this.playerHandEl.innerHTML = '';
+        if (this.dealerScoreEl) this.dealerScoreEl.textContent = '';
+        if (this.playerScoreEl) this.playerScoreEl.textContent = '';
         
         this.roundHistory = [];
         this.clearScoreboard();

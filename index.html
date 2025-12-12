@@ -234,6 +234,9 @@
         <div class="money-display">
             <span class="money-label">YOUR LIFE SAVINGS:</span>
             <span class="money-amount" id="money">$1000</span>
+            <span class="bet-separator">|</span>
+            <span class="money-label">CURRENT BET:</span>
+            <span class="bet-amount" id="current-bet">$0</span>
         </div>
 
         <div class="table">
@@ -330,6 +333,7 @@
                 </div>
                 <div class="hand" id="player-hand"></div>
                 <div class="score" id="player-score"></div>
+                <div class="bust-probability hidden" id="bust-probability">Bust: 0%</div>
             </div>
         </div>
 
@@ -441,21 +445,40 @@
 
     </div>
 
+    <!-- Perk Tooltip (outside scale wrapper for correct fixed positioning) -->
+    <div class="perk-tooltip hidden" id="perk-tooltip">
+        <div class="perk-tooltip-name" id="perk-tooltip-name"></div>
+        <div class="perk-tooltip-desc" id="perk-tooltip-desc"></div>
+    </div>
+
     <!-- Scoreboard -->
     <div class="scoreboard hidden" id="scoreboard">
         <h3>📊 SCOREBOARD</h3>
         <div class="scoreboard-entry dealer-entry">
             <div class="scoreboard-icon">
-                <div class="mini-satan-sprite">
-                    <div class="mini-horns">
-                        <div class="mini-horn left"></div>
-                        <div class="mini-horn right"></div>
-                    </div>
-                    <div class="mini-satan-head">
-                        <div class="mini-satan-eyes">
-                            <div class="mini-eye left"></div>
-                            <div class="mini-eye right"></div>
+                <div class="satan-container scoreboard-size">
+                    <div class="satan">
+                        <div class="horns">
+                            <div class="horn left"></div>
+                            <div class="horn right"></div>
                         </div>
+                        <div class="satan-head">
+                            <div class="satan-eyes">
+                                <div class="eye left"><div class="pupil"></div></div>
+                                <div class="eye right"><div class="pupil"></div></div>
+                            </div>
+                            <div class="satan-nose"></div>
+                            <div class="satan-mouth">
+                                <div class="fang left"></div>
+                                <div class="fang right"></div>
+                            </div>
+                        </div>
+                        <div class="goatee"></div>
+                    </div>
+                    <div class="flames">
+                        <div class="flame f1"></div>
+                        <div class="flame f2"></div>
+                        <div class="flame f3"></div>
                     </div>
                 </div>
             </div>
@@ -467,13 +490,47 @@
         <div class="scoreboard-vs">VS</div>
         <div class="scoreboard-entry player-entry">
             <div class="scoreboard-icon">
-                <div class="mini-loser-sprite">
-                    <div class="mini-loser-head">
-                        <div class="mini-loser-eyes">
-                            <div class="mini-loser-eye left"></div>
-                            <div class="mini-loser-eye right"></div>
+                <div class="loser-container scoreboard-size">
+                    <div class="loser">
+                        <div class="loser-hair">
+                            <div class="hair-strand s1"></div>
+                            <div class="hair-strand s2"></div>
+                            <div class="hair-strand s3"></div>
+                            <div class="bald-spot"></div>
                         </div>
-                        <div class="mini-loser-mouth"></div>
+                        <div class="loser-head">
+                            <div class="sweat-drops">
+                                <div class="sweat s1"></div>
+                                <div class="sweat s2"></div>
+                                <div class="sweat s3"></div>
+                            </div>
+                            <div class="loser-eyes">
+                                <div class="eye-bag left"></div>
+                                <div class="eye-bag right"></div>
+                                <div class="loser-eye left">
+                                    <div class="tired-lid"></div>
+                                    <div class="loser-pupil"></div>
+                                </div>
+                                <div class="loser-eye right">
+                                    <div class="tired-lid"></div>
+                                    <div class="loser-pupil"></div>
+                                </div>
+                            </div>
+                            <div class="loser-nose"></div>
+                            <div class="loser-mouth">
+                                <div class="missing-tooth"></div>
+                            </div>
+                            <div class="tear left"></div>
+                            <div class="tear right"></div>
+                            <div class="stubble"></div>
+                        </div>
+                        <div class="loser-neck">
+                            <div class="neck-fat"></div>
+                        </div>
+                    </div>
+                    <div class="stink-lines">
+                        <div class="stink s1">~</div>
+                        <div class="stink s2">~</div>
                     </div>
                 </div>
             </div>
@@ -571,10 +628,10 @@
     </div><!-- End game-scale-wrapper -->
 
     <!-- Modular JavaScript -->
-    <script src="js/config.js?v=23"></script>
+    <script src="js/config.js?v=24"></script>
     <script src="js/audio.js?v=22"></script>
     <script src="js/ui.js?v=27"></script>
-    <script src="js/game.js?v=45"></script>
+    <script src="js/game.js?v=52"></script>
     <script src="js/main.js?v=23"></script>
 </body>
 </html>

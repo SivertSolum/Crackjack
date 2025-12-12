@@ -1,4 +1,4 @@
-# 🃏 CRACKJACK
+# 🃏 CRACKJACK 🃏
 
 ### *"Definitely Not Rigged"™*
 
@@ -6,7 +6,7 @@ A darkly hilarious roguelike blackjack game where you face off against Satan him
 
 ---
 
-## 🎮 [▶️ Play Now on GitHub Pages](https://sivertsolum.github.io/Crackjack/)
+## [Play Now on GitHub Pages](https://sivertsolum.github.io/Crackjack/)
 
 <!-- 
   ⬆️ UPDATE THIS LINK: Replace YOUR_USERNAME with your GitHub username
@@ -17,45 +17,39 @@ A darkly hilarious roguelike blackjack game where you face off against Satan him
 
 ---
 
-## 📸 Screenshots
-
-<!-- Add your screenshots to the /screenshots folder and uncomment/update these paths -->
-<!--
-<p align="center">
-  <img src="screenshots/main-menu.png" alt="Main Menu" width="400"/>
-  <img src="screenshots/gameplay.png" alt="Gameplay" width="400"/>
-</p>
+## Screenshots
 
 <p align="center">
-  <img src="screenshots/boss-fight.png" alt="Boss Fight" width="400"/>
-  <img src="screenshots/perk-selection.png" alt="Perk Selection" width="400"/>
+  <img src="screenshots/game_screen_1.png" alt="Gameplay 1" width="400"/>
+  <img src="screenshots/game_screen_2.png" alt="Gameplay 2" width="400"/>
+  <img src="screenshots/shop.png" alt="Shop" width="400"/>
+  <img src="screenshots/game_over.png" alt="Game Over" width="400"/>
 </p>
--->
 
 *Screenshots coming soon! Add images to the `/screenshots` folder.*
 
 ---
 
-## ✨ Features
+## Features
 
-### 🎰 Roguelike Blackjack
+### Roguelike Blackjack
 - **7 Floors** of increasing difficulty, each ending with a unique boss
 - **Perks & Relics** — Collect powerful upgrades that stack and synergize
 - **Curses** — Negative effects that accumulate as you descend deeper
 - **Events** — Random encounters with risky choices and rewards
 - **Side Bets** — Perfect Pairs and 21+3 for bonus winnings (or losses)
 
-### 👹 Unfair Dealers
+### Unfair Dealers
 - **Elite Dealers** — Mini-bosses with special rules like timers, stolen relics, or mirrored hands
 - **Floor Bosses** — From THE PIT BOSS to SATAN HIMSELF, each with unique game-changing abilities
 - **Cheating Encouraged** — The dealer may or may not cheat. Probably will.
 
-### 🛒 Shops & Upgrades
+### Shops & Upgrades
 - **Perk Shop** — Buy power-ups between hands
 - **Rest Sites** — Heal up, meditate, or gamble your winnings
 - **Treasure Rooms** — Risk it for rare loot (or a mimic!)
 
-### 🎨 Retro Aesthetic
+### Retro Aesthetic
 - **Pixel Art Style** — CRT scanlines, retro fonts, and nostalgic vibes
 - **CSS-Only Characters** — Satan and your pathetic player avatar, rendered in pure CSS
 - **Synthesized Sound Effects** — Web Audio API-generated SFX
@@ -63,7 +57,7 @@ A darkly hilarious roguelike blackjack game where you face off against Satan him
 
 ---
 
-## 🎯 How To Play
+## How To Play
 
 | Action | Description |
 |--------|-------------|
@@ -123,7 +117,7 @@ A darkly hilarious roguelike blackjack game where you face off against Satan him
 
 ---
 
-## 🎵 Audio
+## Audio
 
 - **Background Music** — Ambient casino soundtrack included
 - **Custom Music** — Upload your own MP3/OGG/WAV files in Options
@@ -131,7 +125,7 @@ A darkly hilarious roguelike blackjack game where you face off against Satan him
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Pure HTML/CSS/JavaScript** — No frameworks, no dependencies
 - **CSS Animations** — Flames, scanlines, and character expressions
@@ -140,7 +134,7 @@ A darkly hilarious roguelike blackjack game where you face off against Satan him
 
 ---
 
-## 🚀 Local Development
+## Local Development
 
 1. Clone the repository:
    ```bash
@@ -163,55 +157,28 @@ A darkly hilarious roguelike blackjack game where you face off against Satan him
 
 ---
 
-## 📁 Project Structure
 
-```
-crackjack/
-├── README.md               # You are here
-├── screenshots/            # Game screenshots for the README
-└── Crackjack/
-    ├── index.html          # Main game page
-    ├── style.css           # All styling, animations, characters
-    ├── js/
-    │   ├── config.js       # Game configuration, perks, bosses, events
-    │   ├── audio.js        # Web Audio API sound system
-    │   ├── ui.js           # Menu navigation and UI management
-    │   ├── game.js         # Core game engine
-    │   ├── main.js         # Entry point
-    │   └── game/
-    │       ├── betting.js  # Betting logic
-    │       ├── core.js     # Core game mechanics
-    │       ├── deck.js     # Card deck management
-    │       ├── perks.js    # Perk system
-    │       └── sidebets.js # Side bet logic
-    ├── music/
-    │   └── soundtrack.mp3  # Background music
-    └── sfx/                # Sound effects (Web Audio generated)
-```
-
----
-
-## 🎮 Game Tips
+## Game Tips
 
 1. **Card Tracker** — Use the card tracker on the left to count cards (the house hates this)
 2. **Side Bets** — High risk, high reward. Perfect for degenerates.
-3. **Save Your Perks** — Some perks are floor-limited, use them wisely
-4. **Watch Your Money** — Go broke and Satan claims your soul
-5. **Boss Prep** — Stock up in shops before boss fights
+3. **Save Your Perks** — Some perks are floor-limited, use them wisely.
+4. **Watch Your Money** — Go broke and Satan claims your soul.
+5. **Boss Prep** — Stock up in shops before boss fights.
 
 ---
 
-## 📜 License
+## License
 
-This project is open source. Feel free to fork, modify, and lose all your virtual money.
+This project is open source. Feel free to fork, modify, and lose all your virtual money. 
 
 ---
 
-## 🙏 Credits
+## Credits
 
-Made with 💀 and questionable life choices.
+Made out of spite and questionable life choices.
 
-*© 2024 Satan's Casino Inc. — All rights to your soul reserved.*
+*© 2025 Satan's Casino Inc. — All rights to your soul reserved.*
 
 ---
 
