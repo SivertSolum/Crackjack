@@ -63,6 +63,11 @@ function startGame() {
     if (!window.game) {
         window.game = new EvilCasino();
         window.game.initializeDeck();
+        if (typeof window.game.initRoguelikeRun === 'function') {
+            window.game.initRoguelikeRun();
+        }
+    } else {
+        window.game.restart();
     }
 }
 

@@ -3,9 +3,22 @@
 
 // Version and Changelog
 const VERSION = {
-    number: '1.0.6',
-    date: '2025-12-10',
+    number: '2.0.0',
+    date: '2026-07-31',
     changelog: [
+        {
+            version: '2.0.0',
+            date: '2026-07-31',
+            title: 'Roguelike Map & Contracts',
+            changes: [
+                'Branching floor maps (Slay the Spire style)',
+                'Floor contracts replace the $10,000 escape goal',
+                'Shops only appear as map rooms',
+                '12 anomaly bosses drawn without replacement + Satan finale',
+                'CSS sprites for House Dealer and all bosses',
+                'Win by defeating Satan on floor 7'
+            ]
+        },
         {
             version: '1.0.0',
             date: '2025-12-10',
@@ -26,25 +39,88 @@ const VERSION = {
 
 const CONFIG = {
     STARTING_MONEY: 100,
-    ESCAPE_GOAL: 10000,
+    ESCAPE_GOAL: 10000, // Deprecated as win condition; kept for legacy references
     SHUFFLE_THRESHOLD: 20,
     
     // Floor settings
     TOTAL_FLOORS: 7,
-    ROOMS_PER_FLOOR: [3, 3, 4, 4, 5, 5, 6],
-    MIN_BET_PER_FLOOR: [10, 25, 50, 100, 150, 200, 500],
+    ROOMS_PER_FLOOR: [3, 3, 4, 4, 5, 5, 4], // Columns before boss (floor 7 shorter)
+    MIN_BET_PER_FLOOR: [10, 25, 40, 60, 80, 100, 150],
+    MAP_BRANCH_WIDTH: [2, 3], // Min/max nodes per column
     
     // Perk system
-    WINS_FOR_UPGRADE: 3,  // Wins needed to pick an upgrade
+    WINS_FOR_UPGRADE: 3,
     
     // Side bet milestones for perks
     SIDE_BET_MILESTONES: {
-        wins: [3, 7, 12, 20],      // Number of side bet wins for perks
-        earnings: [200, 500, 1000, 2500] // Total earnings from side bets for perks
+        wins: [3, 7, 12, 20],
+        earnings: [200, 500, 1000, 2500]
     },
     
     SUITS: ['♠', '♥', '♦', '♣'],
     VALUES: ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+};
+
+// Floor contracts — assigned at floor start (not tied to a fixed boss)
+const CONTRACTS = [
+    {
+        id: 'winStreak',
+        name: 'Hot Streak',
+        desc: 'Win {target} hands before {fail} losses',
+        type: 'winsBeforeLosses',
+        target: 3,
+        failAt: 3,
+        icon: '🔥'
+    },
+    {
+        id: 'bankroll',
+        name: 'House Tax',
+        desc: 'Net +${target} this floor',
+        type: 'netGain',
+        target: 150,
+        icon: '💰'
+    },
+    {
+        id: 'eliteClear',
+        name: 'Elite Mark',
+        desc: 'Clear 1 elite room this floor',
+        type: 'clearElite',
+        target: 1,
+        icon: '⚔️'
+    },
+    {
+        id: 'blackjack',
+        name: 'Natural Order',
+        desc: 'Win a hand with blackjack',
+        type: 'winBlackjack',
+        target: 1,
+        icon: '🃏'
+    },
+    {
+        id: 'splitWin',
+        name: 'Divide & Conquer',
+        desc: 'Win a split hand',
+        type: 'winSplit',
+        target: 1,
+        icon: '✂️'
+    },
+    {
+        id: 'handsWon',
+        name: 'Table Time',
+        desc: 'Win {target} hands this floor',
+        type: 'totalWins',
+        target: 4,
+        icon: '🎯'
+    }
+];
+
+const FLOOR_7_CONTRACT = {
+    id: 'defeatSatan',
+    name: "Satan's Challenge",
+    desc: 'Defeat Satan Himself',
+    type: 'defeatBoss',
+    target: 1,
+    icon: '👹'
 };
 
 // Room types and their weights per floor
@@ -192,12 +268,13 @@ const DEALER_PERKS = [
     }
 ];
 
-// Bosses - one per floor, increasing difficulty
+// Anomaly bosses — 12 pool; floors 1–6 draw without replacement
 const BOSSES = [
     { 
         id: 'pitboss', 
         name: 'THE PIT BOSS', 
         icon: '👔', 
+        sprite: 'pitboss',
         desc: '"I run this floor."', 
         rule: 'Dealer stands on 18+',
         dealerStandsOn: 18,
@@ -207,6 +284,7 @@ const BOSSES = [
         id: 'ladyluck', 
         name: 'LADY LUCK', 
         icon: '🎭', 
+        sprite: 'ladyluck',
         desc: '"Luck is just math you don\'t understand."', 
         rule: 'All cards face-down until stand',
         hideCards: true,
@@ -216,6 +294,7 @@ const BOSSES = [
         id: 'loanshark', 
         name: 'THE LOAN SHARK', 
         icon: '🦈', 
+        sprite: 'loanshark',
         desc: '"Let\'s make this interesting..."', 
         rule: 'Win = 2.5x, Lose = 2x loss',
         multiplierWin: 2.5,
@@ -226,6 +305,7 @@ const BOSSES = [
         id: 'countess', 
         name: 'THE COUNTESS', 
         icon: '🧛', 
+        sprite: 'countess',
         desc: '"Your blood... I mean money..."', 
         rule: 'Lose $75 every time you hit',
         hitCost: 75,
@@ -235,30 +315,107 @@ const BOSSES = [
         id: 'twins', 
         name: 'THE TWINS', 
         icon: '👯', 
+        sprite: 'twins',
         desc: '"Two heads are better than one."', 
         rule: 'Must beat TWO dealer hands',
         doubleDealer: true,
         reward: { type: 'removeCurse', value: 'all' }
     },
     { 
-        id: 'dealer', 
+        id: 'grandmaster', 
         name: 'THE GRANDMASTER', 
         icon: '🎩', 
+        sprite: 'grandmaster',
         desc: '"I taught Satan everything he knows."', 
         rule: 'Dealer always hits soft 17',
         dealerHitsSoft17: true,
         reward: { type: 'relic', value: 1 }
     },
-    { 
-        id: 'satan', 
-        name: 'SATAN HIMSELF', 
-        icon: '👹', 
-        desc: '"You dare challenge ME?!"', 
-        rule: 'Dealer starts with 3 cards',
-        dealerCards: 3,
-        reward: { type: 'victory', value: true }
+    {
+        id: 'croupier',
+        name: 'THE CROUPIER',
+        icon: '🎴',
+        sprite: 'croupier',
+        desc: '"Side action is mandatory."',
+        rule: 'Must place at least $10 on each side bet',
+        forceSideBets: 10,
+        reward: { type: 'money', value: 250 }
+    },
+    {
+        id: 'hangman',
+        name: 'THE HANGMAN',
+        icon: '🪢',
+        sprite: 'hangman',
+        desc: '"One wrong step..."',
+        rule: 'Busting costs an extra full bet',
+        bustPenalty: true,
+        reward: { type: 'perk', value: 1 }
+    },
+    {
+        id: 'jester',
+        name: 'THE JESTER',
+        icon: '🃏',
+        sprite: 'jester',
+        desc: '"The house rules change when I laugh!"',
+        rule: 'Random rule each hand (stand 16/18 or payout flip)',
+        jesterRules: true,
+        reward: { type: 'money', value: 300 }
+    },
+    {
+        id: 'bookie',
+        name: 'THE BOOKIE',
+        icon: '📒',
+        sprite: 'bookie',
+        desc: '"Lock in your play before the deal."',
+        rule: 'Declare HIT or STAND before cards are dealt',
+        declareBeforeDeal: true,
+        reward: { type: 'relic', value: 1 }
+    },
+    {
+        id: 'widow',
+        name: 'THE BLACK WIDOW',
+        icon: '🕷️',
+        sprite: 'widow',
+        desc: '"Something always gets burned."',
+        rule: 'First card of the deck is burned each hand',
+        burnCard: true,
+        reward: { type: 'money', value: 350 }
+    },
+    {
+        id: 'auditor',
+        name: 'THE AUDITOR',
+        icon: '📋',
+        sprite: 'auditor',
+        desc: '"Everything is taxable."',
+        rule: 'Normal wins pay half; only blackjack pays full',
+        taxWins: true,
+        reward: { type: 'perk', value: 1 }
     }
 ];
+
+// Fixed floor-7 finale (not in the random anomaly pool)
+const SATAN_BOSS = { 
+    id: 'satan', 
+    name: 'SATAN HIMSELF', 
+    icon: '👹', 
+    sprite: 'satan',
+    desc: '"You dare challenge ME?!"', 
+    rule: 'Dealer starts with 3 cards',
+    dealerCards: 3,
+    reward: { type: 'victory', value: true }
+};
+
+const ROOM_ICONS = {
+    normal: '🃏',
+    elite: '⚔️',
+    event: '❓',
+    shop: '🛒',
+    rest: '😴',
+    treasure: '💎',
+    gamble: '🎰',
+    boss: '👹',
+    start: '🚪'
+};
 
 // Random events
 const EVENTS = [

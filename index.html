@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EVIL CASINO - The World's Most Fair Casino™</title>
-    <link rel="stylesheet" href="style.css?v=47">
+    <link rel="stylesheet" href="style.css?v=48">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -203,14 +203,15 @@
             <h2>❓ HOW TO PLAY</h2>
             
             <div class="howto-text">
-                <p><strong>GOAL:</strong> Escape with $10,000!</p>
+                <p><strong>GOAL:</strong> Survive 7 floors and defeat Satan Himself!</p>
+                <p><strong>MAP:</strong> Pick a path through rooms — shops, events, elites, and more.</p>
+                <p><strong>CONTRACT:</strong> Finish it before you clear the boss — or you forfeit after the fight.</p>
                 <p><strong>BLACKJACK:</strong> Get closer to 21 than the dealer without going over.</p>
                 <p><strong>CARDS:</strong> Number cards = face value, Face cards = 10, Aces = 1 or 11</p>
                 <p><strong>HIT:</strong> Take another card</p>
                 <p><strong>STAND:</strong> Keep your hand</p>
                 <p><strong>DOUBLE:</strong> Double bet, take one card, then stand</p>
-                <p><strong>WIN 3 HANDS:</strong> Choose a perk upgrade!</p>
-                <p><strong>BEAT THE BOSS:</strong> Advance to the next floor!</p>
+                <p><strong>SHOPS:</strong> Only on the map — no free shop after wins!</p>
                 <p class="warning-text">⚠️ The dealer may or may not cheat. Probably will.</p>
             </div>
             
@@ -249,6 +250,7 @@
             
             <div class="dealer-section">
                 <div class="section-header">
+                    <div id="dealer-sprite-mount">
                     <div class="satan-container">
                         <div class="satan">
                             <div class="horns">
@@ -274,7 +276,8 @@
                             <div class="flame f3"></div>
                         </div>
                     </div>
-                    <span class="dealer-title">DEALER<br><span class="satan-subtitle">LORD OF LOSSES</span></span>
+                    </div>
+                    <span class="dealer-title">HOUSE DEALER<br><span class="satan-subtitle">DEFINITELY FAIR</span></span>
                 </div>
                 <div class="hand" id="dealer-hand"></div>
                 <div class="score" id="dealer-score"></div>
@@ -421,13 +424,13 @@
                 <span class="stat-label">Floor:</span>
                 <span class="stat-value" id="current-floor">1</span>
             </div>
-            <div class="stat">
+            <div class="stat contract-stat">
+                <span class="stat-label">Contract:</span>
+                <span class="stat-value" id="escape-goal">—</span>
+            </div>
+            <div class="stat hidden" id="legacy-wins-stat">
                 <span class="stat-label">Wins:</span>
                 <span class="stat-value" id="win-streak">0</span>/<span class="stat-value" id="wins-needed">3</span>
-            </div>
-            <div class="stat">
-                <span class="stat-label">Goal:</span>
-                <span class="stat-value" id="escape-goal">$10,000</span>
             </div>
         </div>
 
@@ -559,7 +562,62 @@
                 <h3>Active Perks:</h3>
                 <div id="shop-active-perks-list">None yet...</div>
             </div>
-            <button class="shop-close-btn menu-btn" id="pre-round-shop-close">✖ CLOSE SHOP</button>
+            <button class="shop-close-btn menu-btn" id="pre-round-shop-close">✖ LEAVE SHOP</button>
+        </div>
+    </div>
+
+    <!-- Floor Map Overlay -->
+    <div class="popup hidden" id="floor-map">
+        <div class="popup-content floor-map-content">
+            <h2 id="floor-map-title">FLOOR 1 MAP</h2>
+            <p class="floor-map-contract" id="floor-map-contract">Contract</p>
+            <p class="floor-map-hint">Choose your path. Finish the contract before clearing the boss — or forfeit after the fight.</p>
+            <div class="floor-map-nodes" id="floor-map-nodes"></div>
+            <div class="map-side-table hidden" id="map-side-table">
+                <p class="map-side-table-msg" id="map-side-table-msg">
+                    Path ended before the contract was done. Play a side table to finish it — or go broke trying.
+                </p>
+                <button class="menu-btn map-side-table-btn" id="map-side-table-btn">🃏 SIDE TABLE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rest Site -->
+    <div class="popup hidden" id="rest-popup">
+        <div class="popup-content event-content">
+            <h2>😴 REST SITE</h2>
+            <p>Catch your breath before the next disaster.</p>
+            <div class="event-choices" id="rest-options"></div>
+        </div>
+    </div>
+
+    <!-- Treasure -->
+    <div class="popup hidden" id="treasure-popup">
+        <div class="popup-content event-content">
+            <h2>💎 TREASURE</h2>
+            <p id="treasure-result">Opening chest...</p>
+            <button class="menu-btn" id="treasure-continue-btn">CONTINUE</button>
+        </div>
+    </div>
+
+    <!-- Gamble Room -->
+    <div class="popup hidden" id="gamble-popup">
+        <div class="popup-content event-content">
+            <h2>🎰 GAMBLE ROOM</h2>
+            <p>High risk. Questionable reward.</p>
+            <div class="event-choices" id="gamble-options"></div>
+        </div>
+    </div>
+
+    <!-- Bookie Declare -->
+    <div class="popup hidden" id="declare-popup">
+        <div class="popup-content event-content">
+            <h2>📒 THE BOOKIE</h2>
+            <p>Declare HIT or STAND before the deal.</p>
+            <div class="event-choices">
+                <button class="event-choice-btn" id="declare-hit-btn">👊 LOCK IN HIT</button>
+                <button class="event-choice-btn" id="declare-stand-btn">🛑 LOCK IN STAND</button>
+            </div>
         </div>
     </div>
 
@@ -591,8 +649,8 @@
     <!-- Victory Popup -->
     <div class="popup hidden" id="victory-popup">
         <div class="popup-content victory-content">
-            <h2>🏆 YOU ESCAPED! 🏆</h2>
-            <p class="victory-message">Against all odds, you beat Satan's casino!</p>
+            <h2>🏆 YOU DEFEATED SATAN! 🏆</h2>
+            <p class="victory-message">Against all odds, you survived Hell's casino!</p>
             <p class="victory-stats" id="victory-stats"></p>
             <button class="restart-btn" id="victory-restart-btn">🎰 Play Again?</button>
         </div>
@@ -636,10 +694,13 @@
     </div><!-- End game-scale-wrapper -->
 
     <!-- Modular JavaScript -->
-    <script src="js/config.js?v=24"></script>
+    <script src="js/config.js?v=25"></script>
+    <script src="js/map.js?v=1"></script>
+    <script src="js/sprites.js?v=1"></script>
     <script src="js/audio.js?v=22"></script>
-    <script src="js/ui.js?v=27"></script>
-    <script src="js/game.js?v=52"></script>
+    <script src="js/ui.js?v=28"></script>
+    <script src="js/game.js?v=53"></script>
+    <script src="js/roguelike.js?v=1"></script>
     <script src="js/main.js?v=23"></script>
 </body>
 </html>

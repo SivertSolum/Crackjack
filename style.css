@@ -4926,3 +4926,270 @@ button.perk-shop-item {
         padding-top: max(8px, env(safe-area-inset-top));
     }
 }
+
+/* ===== FLOOR MAP ===== */
+#floor-map {
+    z-index: 200;
+}
+.floor-map-content {
+    max-width: 920px;
+    width: 95%;
+    background: linear-gradient(180deg, #1a0a12 0%, #0d0610 100%);
+    border: 3px solid #8b0000;
+}
+.floor-map-contract {
+    color: #ffd700;
+    font-size: 0.65rem;
+    margin: 8px 0;
+    line-height: 1.5;
+}
+.floor-map-hint {
+    font-size: 0.5rem;
+    color: #aaa;
+    margin-bottom: 16px;
+}
+.floor-map-nodes {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    min-height: 180px;
+    padding: 12px 0;
+}
+.map-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+}
+.map-connector {
+    display: flex;
+    align-items: center;
+    color: #664;
+    font-size: 1.4rem;
+    padding: 0 2px;
+}
+.map-node {
+    background: #221018;
+    border: 2px solid #553;
+    color: #ccc;
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.4rem;
+    padding: 10px 8px;
+    min-width: 72px;
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.map-node-icon { font-size: 1.1rem; line-height: 1; }
+.map-node-label { text-align: center; line-height: 1.3; max-width: 80px; }
+.map-node.available {
+    border-color: #ffd700;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.35);
+    animation: mapPulse 1.6s ease-in-out infinite;
+}
+.map-node.available:hover {
+    transform: scale(1.06);
+    background: #3a1820;
+}
+.map-node.completed {
+    opacity: 0.45;
+    border-color: #444;
+}
+.map-node.current {
+    outline: 2px dashed #0f0;
+}
+.map-node.locked {
+    opacity: 0.35;
+    filter: grayscale(0.8);
+}
+.map-node[data-type="boss"].available {
+    border-color: #ff2222;
+    box-shadow: 0 0 14px rgba(255, 0, 0, 0.5);
+}
+.map-node[data-type="boss"].contract-risk.available {
+    border-color: #ff8800;
+    box-shadow: 0 0 12px rgba(255, 140, 0, 0.45);
+}
+.map-node[data-type="shop"].available { border-color: #4af; }
+.map-node[data-type="elite"].available { border-color: #f84; }
+@keyframes mapPulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(255, 215, 0, 0.25); }
+    50% { box-shadow: 0 0 14px rgba(255, 215, 0, 0.55); }
+}
+.game-container.map-focus .table,
+.game-container.map-focus .controls,
+.game-container.map-focus .money-display {
+    filter: brightness(0.35);
+    pointer-events: none;
+}
+.stats-bar .contract-stat .stat-value {
+    font-size: 0.45rem;
+    max-width: 280px;
+    display: inline-block;
+    line-height: 1.4;
+    text-align: left;
+}
+.boss-portrait {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+.boss-portrait .dealer-sprite {
+    transform: scale(1.8);
+    margin: 16px;
+}
+.table.elite-mode {
+    box-shadow: 0 0 20px rgba(255, 120, 40, 0.45);
+}
+#dealer-sprite-mount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 35px;
+    min-height: 35px;
+}
+#dealer-sprite-mount.elite-tint .house-dealer-container {
+    filter: hue-rotate(-25deg) saturate(1.4) brightness(1.1);
+}
+.dealer-sprite {
+    position: relative;
+    width: 35px;
+    height: 35px;
+}
+
+/* ===== HOUSE DEALER ===== */
+.house-dealer-container { width: 35px; height: 35px; position: relative; }
+.house-dealer { position: relative; width: 28px; height: 32px; margin: 0 auto; }
+.hd-visor {
+    position: absolute; top: 0; left: 2px; right: 2px; height: 6px;
+    background: #111; border-radius: 2px 2px 0 0; z-index: 3;
+}
+.hd-visor::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 3px;
+    background: rgba(0,200,255,0.35);
+}
+.hd-head {
+    width: 22px; height: 20px; margin: 5px auto 0;
+    background: linear-gradient(180deg, #c4a882, #a08060);
+    border-radius: 5px; border: 1px solid #5a4030; position: relative;
+}
+.hd-eyes { display: flex; justify-content: space-around; padding: 5px 2px 0; }
+.hd-eye {
+    width: 5px; height: 4px; background: #1a1a1a; border-radius: 1px; position: relative;
+}
+.hd-pupil {
+    width: 2px; height: 2px; background: #0ff; position: absolute; top: 1px; left: 1px;
+    box-shadow: 0 0 3px #0ff;
+}
+.hd-nose {
+    width: 3px; height: 3px; background: #8a6040; margin: 1px auto 0; border-radius: 1px;
+}
+.hd-mouth {
+    width: 10px; height: 2px; background: #3a2010; margin: 2px auto 0; border-radius: 1px;
+}
+.hd-bowtie {
+    width: 12px; height: 6px; background: #8b0000; margin: 2px auto 0;
+    clip-path: polygon(0 50%, 40% 0, 40% 100%, 0 50%, 100% 50%, 60% 0, 60% 100%);
+}
+.hd-collar {
+    width: 18px; height: 4px; background: #eee; margin: 1px auto 0; border-radius: 0 0 2px 2px;
+}
+
+/* ===== ANOMALY BOSSES (compact CSS sprites) ===== */
+.pitboss .pb-hair { height: 4px; background: #222; width: 24px; margin: 0 auto; border-radius: 2px 2px 0 0; }
+.pitboss .pb-head { width: 22px; height: 20px; margin: 0 auto; background: #d2b48c; border-radius: 4px; border: 1px solid #654; position: relative; }
+.pitboss .pb-glasses { position: absolute; top: 5px; left: 2px; right: 2px; height: 4px; border-top: 2px solid #222; border-bottom: 1px solid #222; }
+.pitboss .pb-eyes { display: flex; justify-content: space-around; padding-top: 5px; }
+.pitboss .pb-eye { width: 4px; height: 3px; background: #111; }
+.pitboss .pb-mouth { width: 8px; height: 2px; background: #422; margin: 6px auto 0; }
+.pitboss .pb-clipboard { width: 10px; height: 8px; background: #ddd; margin: 2px auto 0; border: 1px solid #888; }
+
+.ladyluck .ll-hair { height: 6px; width: 26px; margin: 0 auto; background: linear-gradient(90deg, #4a0080, #c0a); border-radius: 8px 8px 0 0; }
+.ladyluck .ll-head { width: 22px; height: 20px; margin: 0 auto; background: #e8c4a8; border-radius: 6px; position: relative; border: 1px solid #864; }
+.ladyluck .ll-blindfold { position: absolute; top: 6px; left: 0; right: 0; height: 5px; background: #111; }
+.ladyluck .ll-coin { position: absolute; right: -4px; top: 8px; width: 7px; height: 7px; background: gold; border-radius: 50%; border: 1px solid #a80; }
+.ladyluck .ll-smile { width: 10px; height: 3px; border-bottom: 2px solid #622; border-radius: 0 0 8px 8px; margin: 14px auto 0; }
+
+.loanshark .ls-fin { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #4a7080; margin: 0 auto; }
+.loanshark .ls-head { width: 24px; height: 18px; margin: 0 auto; background: #6a9; border-radius: 4px 4px 10px 10px; border: 1px solid #356; }
+.loanshark .ls-eyes { display: flex; justify-content: space-around; padding-top: 4px; }
+.loanshark .ls-eye { width: 5px; height: 4px; background: #111; border-radius: 50%; }
+.loanshark .ls-teeth { height: 4px; margin: 4px 3px 0; background: repeating-linear-gradient(90deg, #fff 0 3px, #356 3px 4px); }
+
+.countess .ct-hair { height: 8px; width: 26px; margin: 0 auto; background: #111; border-radius: 10px 10px 0 0; }
+.countess .ct-head { width: 20px; height: 20px; margin: 0 auto; background: #e8e0e8; border-radius: 5px; border: 1px solid #666; position: relative; }
+.countess .ct-eyes { display: flex; justify-content: space-around; padding-top: 6px; }
+.countess .ct-eye { width: 4px; height: 4px; background: #800; box-shadow: 0 0 4px #f00; }
+.countess .ct-fangs { display: flex; justify-content: center; gap: 4px; margin-top: 4px; }
+.countess .ct-fangs div { width: 2px; height: 5px; background: #fff; clip-path: polygon(50% 100%, 0 0, 100% 0); }
+.countess .ct-drop { width: 4px; height: 6px; background: #a00; margin: 2px auto 0; border-radius: 50% 50% 40% 40%; }
+
+.twins { display: flex; flex-wrap: wrap; justify-content: center; width: 34px; }
+.twins .tw-head { width: 14px; height: 16px; background: #c9a; border: 1px solid #654; border-radius: 3px; margin: 0 1px; }
+.twins .tw-head.left { background: #cab; }
+.twins .tw-head.right { background: #bac; }
+.twins .tw-eye { width: 3px; height: 3px; background: #111; margin: 4px auto 0; }
+.twins .tw-mouth { width: 6px; height: 2px; background: #422; margin: 3px auto 0; }
+.twins .tw-collar { width: 28px; height: 5px; background: #224; margin: 2px auto 0; }
+
+.grandmaster .gm-crown { width: 18px; height: 6px; margin: 0 auto; background: gold; clip-path: polygon(0 100%, 0 40%, 25% 70%, 50% 0, 75% 70%, 100% 40%, 100% 100%); }
+.grandmaster .gm-head { width: 22px; height: 20px; margin: 0 auto; background: #c4a882; border-radius: 4px; border: 1px solid #543; position: relative; }
+.grandmaster .gm-monocle { position: absolute; right: 3px; top: 5px; width: 7px; height: 7px; border: 2px solid gold; border-radius: 50%; }
+.grandmaster .gm-eyes { display: flex; justify-content: space-around; padding-top: 6px; }
+.grandmaster .gm-eye { width: 3px; height: 3px; background: #111; }
+.grandmaster .gm-mouth { width: 8px; height: 2px; background: #333; margin: 5px auto 0; }
+
+.croupier .cr-hat { width: 24px; height: 6px; margin: 0 auto; background: #111; border-radius: 2px; }
+.croupier .cr-head { width: 20px; height: 18px; margin: 0 auto; background: #d2b48c; border-radius: 4px; border: 1px solid #654; }
+.croupier .cr-eyes { display: flex; justify-content: space-around; padding-top: 5px; }
+.croupier .cr-eye { width: 4px; height: 3px; background: #222; }
+.croupier .cr-mustache { width: 12px; height: 3px; background: #333; margin: 4px auto 0; border-radius: 0 0 6px 6px; }
+.croupier .cr-chip { width: 8px; height: 8px; margin: 2px auto 0; background: #0d6efd; border-radius: 50%; border: 2px dashed #fff; }
+
+.hangman .hg-noose { width: 14px; height: 8px; margin: 0 auto; border: 2px solid #8b4513; border-bottom: none; border-radius: 8px 8px 0 0; }
+.hangman .hg-head { width: 18px; height: 18px; margin: 0 auto; background: #bbb; border-radius: 50%; border: 1px solid #555; }
+.hangman .hg-eyes { display: flex; justify-content: space-around; padding-top: 5px; }
+.hangman .hg-eye { width: 4px; height: 1px; background: #111; transform: rotate(25deg); }
+.hangman .hg-frown { width: 8px; height: 4px; border-top: 2px solid #333; border-radius: 8px 8px 0 0; margin: 4px auto 0; }
+
+.jester .js-hat { height: 10px; width: 28px; margin: 0 auto; background: linear-gradient(90deg, #c00, #0a0); clip-path: polygon(0 100%, 15% 0, 50% 60%, 85% 0, 100% 100%); position: relative; }
+.jester .js-bell { position: absolute; top: -2px; width: 4px; height: 4px; background: gold; border-radius: 50%; }
+.jester .js-bell.l { left: 2px; }
+.jester .js-bell.r { right: 2px; }
+.jester .js-head { width: 20px; height: 18px; margin: 0 auto; background: #e8c4a8; border-radius: 4px; border: 1px solid #864; }
+.jester .js-eyes { display: flex; justify-content: space-around; padding-top: 4px; }
+.jester .js-eye { width: 5px; height: 5px; background: #111; border-radius: 50%; }
+.jester .js-grin { width: 12px; height: 6px; border: 2px solid #422; border-top: none; border-radius: 0 0 12px 12px; margin: 2px auto 0; }
+
+.bookie .bk-head { width: 22px; height: 20px; margin: 2px auto 0; background: #c4a882; border-radius: 4px; border: 1px solid #543; position: relative; }
+.bookie .bk-eyes { display: flex; justify-content: space-around; padding-top: 5px; }
+.bookie .bk-eye { width: 4px; height: 3px; background: #111; }
+.bookie .bk-cig { position: absolute; right: -6px; bottom: 6px; width: 8px; height: 2px; background: #eee; }
+.bookie .bk-cig::after { content: ""; position: absolute; right: -3px; top: -1px; width: 3px; height: 3px; background: #f60; border-radius: 50%; }
+.bookie .bk-mouth { width: 8px; height: 2px; background: #333; margin: 5px auto 0; }
+.bookie .bk-ledger { width: 12px; height: 8px; margin: 2px auto 0; background: #f5f0d0; border: 1px solid #886; }
+
+.widow .wd-veil { width: 26px; height: 8px; margin: 0 auto; background: #111; border-radius: 8px 8px 0 0; opacity: 0.85; }
+.widow .wd-head { width: 20px; height: 18px; margin: 0 auto; background: #ddd0d8; border-radius: 5px; border: 1px solid #666; }
+.widow .wd-eyes { display: flex; justify-content: space-around; padding-top: 5px; }
+.widow .wd-eye { width: 4px; height: 4px; background: #400; border-radius: 50%; }
+.widow .wd-lips { width: 8px; height: 3px; background: #800; margin: 4px auto 0; border-radius: 2px; }
+.widow .wd-spider { width: 6px; height: 6px; margin: 2px auto 0; background: #222; border-radius: 50%; box-shadow: -4px 0 #222, 4px 0 #222; }
+
+.auditor .au-glasses { width: 22px; height: 5px; margin: 0 auto; border: 2px solid #333; border-radius: 2px; background: rgba(150,200,255,0.3); }
+.auditor .au-head { width: 20px; height: 18px; margin: 0 auto; background: #c4a882; border-radius: 3px; border: 1px solid #543; }
+.auditor .au-eyes { display: flex; justify-content: space-around; padding-top: 4px; }
+.auditor .au-eye { width: 3px; height: 3px; background: #111; }
+.auditor .au-mouth { width: 6px; height: 2px; background: #333; margin: 5px auto 0; }
+.auditor .au-clipboard { width: 10px; height: 10px; margin: 2px auto 0; background: #eee; border: 1px solid #888; }
+
+.satan-mount .flames { display: flex !important; }

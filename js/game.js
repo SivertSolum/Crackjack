@@ -929,6 +929,21 @@ class EvilCasino {
             return;
         }
 
+        // Croupier: require side bets
+        if (this.isBossFight && this.currentBoss?.forceSideBets) {
+            const need = this.currentBoss.forceSideBets;
+            if ((this.sideBetPP || 0) < need || (this.sideBet21Plus3 || 0) < need) {
+                this.showMessage(`🎴 Croupier demands ≥$${need} on Perfect Pairs AND 21+3!`);
+                return;
+            }
+        }
+
+        // Bookie: declare before deal
+        if (this.isBossFight && this.currentBoss?.declareBeforeDeal && !this.bookieDeclaration) {
+            this.showDeclarePopup();
+            return;
+        }
+
         // Apply per-hand costs (curses)
         if (this.hasCurse && this.hasCurse('heavyDebt')) {
             const cost = 25;
@@ -945,6 +960,12 @@ class EvilCasino {
         }
 
         await this.checkAndReshuffle();
+
+        // Widow: burn top card
+        if (this.isBossFight && this.currentBoss?.burnCard) {
+            const burned = this.drawCard();
+            this.showMessage(`🕷️ Black Widow burns ${burned.value}${burned.suit}...`);
+        }
 
         // Save bets for rebet functionality
         this.lastBet = this.currentBet;
@@ -982,12 +1003,24 @@ class EvilCasino {
         this.playerHand.push(this.drawCard());
         this.dealerHand.push(this.drawCard());
 
+        // Satan: third dealer card
+        if (this.isBossFight && this.currentBoss?.dealerCards >= 3) {
+            this.dealerHand.push(this.drawCard());
+        }
+
         await this.animateDeal();
+
+        // Lady Luck: hide cards until stand
+        if (this.isBossFight && this.currentBoss?.hideCards) {
+            this.playerHandEl.querySelectorAll('.card').forEach(c => c.classList.add('face-down', 'hidden-by-boss'));
+            this.dealerHandEl.querySelectorAll('.card').forEach(c => c.classList.add('face-down', 'hidden-by-boss'));
+            this.showMessage('🎭 Lady Luck hides all cards until you stand!');
+        }
 
         const playerScore = this.calculateScore(this.playerHand, true);
         const dealerScore = this.calculateScore(this.dealerHand);
 
-        if (dealerScore === 21) {
+        if (dealerScore === 21 && !(this.isBossFight && this.currentBoss?.dealerCards >= 3 && this.dealerHand.length > 2)) {
             await this.revealDealerCard();
             playLoseSound();
             this.showMessage(this.getRandomMessage(this.dealerBlackjackMessages), 'lose');
@@ -1015,14 +1048,25 @@ class EvilCasino {
         this.splitBets = [];
         this.currentSplitHandIndex = 0;
         
-        // Update split button
         this.updateSplitButton();
         
-        // Evaluate side bets after initial deal
         await this.evaluateSideBets();
         
+        // Bookie declaration: auto stand or force hit path
+        if (this.bookieDeclaration === 'stand') {
+            this.showMessage('📒 Bookie: You locked in STAND.');
+            this.bookieDeclaration = null;
+            await this.delay(400);
+            await this.stand();
+            return;
+        }
+        if (this.bookieDeclaration === 'hit') {
+            this.showMessage('📒 Bookie: You locked in HIT — take a card!');
+            this.bookieDeclaration = null;
+        }
+
         this.showMessage("Your move, genius. 🤔");
-        this.updateScores(true);
+        this.updateScores(!(this.isBossFight && this.currentBoss?.hideCards));
         this.updateBustProbability();
     }
 
@@ -1042,6 +1086,13 @@ class EvilCasino {
         playCardDealSound();
         this.dealerHandEl.appendChild(this.createCardElement(this.dealerHand[1], true));
         await this.delay(250);
+
+        // Satan / extra dealer cards
+        for (let i = 2; i < this.dealerHand.length; i++) {
+            playCardDealSound();
+            this.dealerHandEl.appendChild(this.createCardElement(this.dealerHand[i]));
+            await this.delay(250);
+        }
 
         this.updateScores(true);
     }
@@ -1112,6 +1163,11 @@ class EvilCasino {
             cardEl.classList.add('rigged');
             playLoseSound();
             this.showMessage(this.getRandomMessage(this.bustMessages), 'lose');
+            if (this.isBossFight && this.currentBoss?.bustPenalty) {
+                this.money = Math.max(0, this.money - this.currentBet);
+                this.showMessage(`🪢 Hangman: Extra bust penalty -$${this.currentBet}!`, 'lose');
+                this.updateDisplay();
+            }
             await this.revealDealerCard();
             const dealerScore = this.calculateScore(this.dealerHand);
             this.addToHistory(score, dealerScore, 'loss');
@@ -1464,18 +1520,42 @@ class EvilCasino {
         if (this.splitBtn) this.splitBtn.disabled = true;
 
         await this.revealDealerCard();
+
+        // Reveal Lady Luck hidden cards
+        if (this.isBossFight && this.currentBoss?.hideCards) {
+            document.querySelectorAll('.hidden-by-boss').forEach(c => {
+                c.classList.remove('face-down', 'hidden-by-boss');
+            });
+            // Re-render player cards properly
+            this.playerHandEl.innerHTML = '';
+            this.playerHand.forEach(card => {
+                this.playerHandEl.appendChild(this.createCardElement(card));
+            });
+            this.updateScores();
+        }
         
         let dealerScore = this.calculateScore(this.dealerHand);
-        const standThreshold = (this.isBossFight && this.currentBoss?.dealerStandsOn) ? this.currentBoss.dealerStandsOn : 17;
+        let standThreshold = (this.isBossFight && this.currentBoss?.dealerStandsOn) ? this.currentBoss.dealerStandsOn : 17;
+        if (this.jesterHandRule === 'stand16') standThreshold = 16;
+        if (this.jesterHandRule === 'stand18') standThreshold = 18;
         
-        if (dealerScore >= standThreshold) {
+        // Grandmaster / soft 17
+        const hitsSoft17 = this.isBossFight && this.currentBoss?.dealerHitsSoft17;
+        
+        if (dealerScore >= standThreshold && !(hitsSoft17 && dealerScore === 17 && this.isSoftScore(this.dealerHand))) {
             this.showMessage("Dealer stands on " + dealerScore + ". 🛑");
             await this.delay(800);
         } else {
             this.showMessage("Dealer must hit... 🎴");
             await this.delay(600);
             
-            while (this.calculateScore(this.dealerHand) < standThreshold) {
+            while (true) {
+                const score = this.calculateScore(this.dealerHand);
+                const soft = this.isSoftScore && this.isSoftScore(this.dealerHand);
+                const mustHitSoft17 = hitsSoft17 && score === 17 && soft;
+                if (score >= standThreshold && !mustHitSoft17) break;
+                if (score > 21) break;
+
                 const card = this.drawCard();
                 this.dealerHand.push(card);
                 playCardDealSound();
@@ -1485,19 +1565,59 @@ class EvilCasino {
                 await this.delay(500);
                 
                 const newScore = this.calculateScore(this.dealerHand);
-                if (newScore >= standThreshold && newScore <= 21) {
-                    this.showMessage("Dealer stands on " + newScore + ". 🛑");
-                    await this.delay(400);
-                    break;
-                } else if (newScore > 21) {
+                if (newScore > 21) {
                     this.showMessage("Dealer BUSTS at " + newScore + "! 💥");
                     await this.delay(400);
                     break;
                 }
             }
+            const finalScore = this.calculateScore(this.dealerHand);
+            if (finalScore <= 21) {
+                this.showMessage("Dealer stands on " + finalScore + ". 🛑");
+                await this.delay(400);
+            }
+        }
+
+        // Twins: must also beat a second dealer hand
+        if (this.isBossFight && this.currentBoss?.doubleDealer) {
+            await this.resolveTwinsSecondHand();
+            return;
         }
 
         await this.resolveRound();
+    }
+
+    async resolveTwinsSecondHand() {
+        this.showMessage('👯 The Twins deal a second hand...');
+        await this.delay(600);
+        const hand2 = [this.drawCard(), this.drawCard()];
+        let score2 = this.calculateScore(hand2);
+        const threshold = 17;
+        while (score2 < threshold) {
+            hand2.push(this.drawCard());
+            score2 = this.calculateScore(hand2);
+            await this.delay(300);
+        }
+        this.showMessage(`👯 Twin hand scores ${score2}`);
+        await this.delay(500);
+
+        const playerScore = this.calculateScore(this.playerHand, true);
+        const dealerScore = this.calculateScore(this.dealerHand);
+        const beatFirst = dealerScore > 21 || playerScore > dealerScore;
+        const beatSecond = score2 > 21 || playerScore > score2;
+        const pushish = playerScore === dealerScore || playerScore === score2;
+
+        if (beatFirst && beatSecond && playerScore <= 21) {
+            playWinSound();
+            this.showMessage('👯 You beat BOTH twins!', 'win');
+            this.addToHistory(playerScore, Math.max(dealerScore, score2), 'win');
+            this.endRound(true);
+        } else {
+            playLoseSound();
+            this.showMessage('👯 The Twins overwhelm you!', 'lose');
+            this.addToHistory(playerScore, Math.max(dealerScore, score2), 'loss');
+            this.endRound(false);
+        }
     }
 
     async resolveRound() {
@@ -1588,6 +1708,11 @@ class EvilCasino {
             if (this.isBossFight && this.currentBoss?.multiplierWin) {
                 payout = this.currentBet * this.currentBoss.multiplierWin;
             }
+
+            // Jester flip payout
+            if (this.jesterHandRule === 'flipPayout') {
+                payout = Math.floor(this.currentBet * 1.5);
+            }
             
             // Blessing from events: Double payout once
             if (this.blessingActive) {
@@ -1618,25 +1743,22 @@ class EvilCasino {
                 }
             }
             
-            if (this.money >= this.escapeGoal) {
-                this.showVictoryScreen();
-                return;
-            }
-            
-            // Check for floor completion (win streak reached)
-            if (this.winStreak >= this.winsNeededForUpgrade) {
-                setTimeout(() => this.showUpgradeSelection(), 1500);
-                return;
-            }
-            
-            // Random event chance after wins (15% chance, not during boss fights)
-            if (!this.isBossFight && this.checkForRandomEvent()) {
-                return; // Event will handle continuation
-            }
-            
         } else if (playerWon === false) {
             this.timesLost++;
             this.winStreak = 0;
+            
+            // Loan Shark / hangman-style extra loss
+            if (this.isBossFight && this.currentBoss?.multiplierLose) {
+                const extra = Math.floor(this.currentBet * (this.currentBoss.multiplierLose - 1));
+                this.money = Math.max(0, this.money - extra);
+                this.showMessage(`🦈 Extra loss: -$${extra}!`, 'lose');
+            }
+
+            if (this.jesterHandRule === 'flipPayout') {
+                const refund = Math.floor(this.currentBet / 2);
+                this.money += refund;
+                this.showMessage(`🃏 Jester refunds $${refund}`);
+            }
             
             // Reset tournament on loss
             if (this.tournamentMode) {
@@ -1650,18 +1772,43 @@ class EvilCasino {
             }
         }
 
+        // Auditor: tax normal wins (blackjack already paid full above — adjust)
+        if (playerWon === true && this.isBossFight && this.currentBoss?.taxWins && !isBlackjack) {
+            const refund = Math.floor(payout / 2);
+            this.money -= refund;
+            this.showMessage('📋 Auditor taxed your win — half payout!', 'lose');
+        }
+
         this.updateDisplay();
         this.updateRoguelikeDisplay();
         
-        // Store whether the player won this round (for shop access)
         this.lastRoundWon = playerWon === true;
 
+        if (typeof this.updateContractFromHand === 'function') {
+            this.updateContractFromHand(playerWon, isBlackjack);
+        }
+
         setTimeout(() => {
-            if (this.money <= 0) {
-                this.showBrokeScreen();
-            } else {
-                this.resetForNewRound();
+            if (this.money <= 0 || this.contractFailed) {
+                if (this.money <= 0) this.showBrokeScreen();
+                return;
             }
+
+            // Boss fight resolved
+            if (this.isBossFight && playerWon === true) {
+                this.onBossDefeated();
+                return;
+            }
+
+            // Combat rooms: one win clears the room
+            if (this.roomMode === 'combat' && !this.isBossFight && playerWon === true) {
+                this.combatCleared = true;
+                this.showMessage('Room cleared!');
+                setTimeout(() => this.finishCurrentRoom(), 900);
+                return;
+            }
+
+            this.resetForNewRound(true);
         }, 1800);
     }
 
@@ -1707,10 +1854,6 @@ class EvilCasino {
         this.upgradePopup.classList.add('hidden');
         this.winStreak = 0;
         this.updateRoguelikeDisplay();
-        
-        // Grant dealer a new perk and show floor complete popup
-        const dealerPerk = this.grantDealerPerk();
-        this.showFloorCompletePopup(dealerPerk);
     }
 
     showVictoryScreen() {
@@ -1718,7 +1861,8 @@ class EvilCasino {
             Floors Cleared: ${this.currentFloor}<br>
             Total Wins: ${this.totalWins}<br>
             Final Fortune: $${this.money}<br>
-            Perks Collected: ${this.activePerks.length}
+            Perks Collected: ${this.activePerks.length}<br>
+            You beat Satan Himself!
         `;
         this.victoryPopup.classList.remove('hidden');
     }
@@ -1815,6 +1959,11 @@ class EvilCasino {
         // Close the event popup
         this.eventPopup.classList.add('hidden');
         this.currentEvent = null;
+
+        // Map event rooms return to the floor map
+        if (this.currentRoom?.type === 'event') {
+            setTimeout(() => this.finishCurrentRoom(), 600);
+        }
     }
     
     processEventReward(reward) {
@@ -2024,10 +2173,9 @@ class EvilCasino {
     }
     
     revealBossAbility() {
-        const bossIndex = Math.min(this.currentFloor - 1, BOSSES.length - 1);
-        const boss = BOSSES[bossIndex];
+        const boss = this.currentFloorBoss || this.currentBoss;
         if (boss) {
-            this.showMessage(`🔮 Next boss: ${boss.name} - ${boss.rule}`);
+            this.showMessage(`🔮 Floor boss: ${boss.name} — ${boss.rule}`);
         } else {
             this.showMessage("🔮 The future is unclear...");
         }
@@ -2063,9 +2211,22 @@ class EvilCasino {
     }
 
     updateRoguelikeDisplay() {
-        this.currentFloorEl.textContent = this.currentFloor;
-        this.winStreakEl.textContent = this.winStreak;
-        this.winsNeededEl.textContent = this.winsNeededForUpgrade;
+        if (this.currentFloorEl) this.currentFloorEl.textContent = this.currentFloor;
+        if (this.winStreakEl) this.winStreakEl.textContent = this.floorWins != null ? this.floorWins : this.winStreak;
+        if (this.winsNeededEl) {
+            const parent = this.winsNeededEl.parentElement;
+            // Hide old streak fraction when using contracts
+            if (this.contract) this.winsNeededEl.textContent = '';
+            else this.winsNeededEl.textContent = this.winsNeededForUpgrade;
+        }
+        if (this.escapeGoalEl) {
+            this.escapeGoalEl.textContent = typeof this.getContractLabel === 'function'
+                ? this.getContractLabel()
+                : `$${this.escapeGoal}`;
+        }
+        if (this.contractHudEl && typeof this.getContractLabel === 'function') {
+            this.contractHudEl.textContent = this.getContractLabel();
+        }
         
         if (this.activePerks.length === 0) {
             this.activeUpgradesEl.innerHTML = 'None yet...';
@@ -2074,7 +2235,6 @@ class EvilCasino {
                 `<span class="perk-badge" data-perk-id="${p.id}" data-perk-name="${p.icon} ${p.name}" data-perk-desc="${p.desc}">${p.icon} ${p.name}${p.maxUses ? ` (${p.uses})` : ''}</span>`
             ).join('');
             
-            // Add hover listeners for tooltips
             this.setupPerkTooltips();
         }
     }
@@ -2159,8 +2319,10 @@ class EvilCasino {
         if (this.preRoundShopPopup) {
             this.preRoundShopPopup.classList.add('hidden');
         }
-        // Make sure money display is up to date after shopping
         this.updateDisplay();
+        if (this.currentRoom?.type === 'shop' && typeof this.finishCurrentRoom === 'function') {
+            this.finishCurrentRoom();
+        }
     }
     
     refreshShopInventory() {
@@ -2449,7 +2611,7 @@ class EvilCasino {
 
     // === UI HELPERS ===
 
-    resetForNewRound() {
+    resetForNewRound(fromCombat = false) {
         this.currentBet = 0;
         this.sideBetPP = 0;
         this.sideBet21Plus3 = 0;
@@ -2476,7 +2638,6 @@ class EvilCasino {
         if (this.plus3BetTotal) this.plus3BetTotal.textContent = '$0';
         if (this.currentBetDisplay) this.currentBetDisplay.textContent = '$0';
         
-        // Update buttons
         this.updateBettingButtons();
         
         this.dealerHandEl.innerHTML = '';
@@ -2486,14 +2647,25 @@ class EvilCasino {
         this.playerScoreEl.textContent = '';
         this.clearScoreboard();
         
-        // Reset split state
         this.isSplitHand = false;
         this.splitHands = [];
         this.splitBets = [];
         this.currentSplitHandIndex = 0;
+        this.bookieDeclaration = null;
         
-        // Refresh shop inventory for next round
-        this.refreshShopInventory();
+        // Croupier: force side bets
+        if (this.isBossFight && this.currentBoss?.forceSideBets) {
+            const amt = this.currentBoss.forceSideBets;
+            this.showMessage(`🎴 Croupier requires $${amt} on each side bet.`);
+        }
+
+        // Jester: roll rule for this hand
+        if (this.isBossFight && this.currentBoss?.jesterRules) {
+            const rules = ['stand16', 'stand18', 'flipPayout'];
+            this.jesterHandRule = rules[Math.floor(Math.random() * rules.length)];
+            const labels = { stand16: 'Dealer stands on 16+', stand18: 'Dealer stands on 18+', flipPayout: 'Wins pay 0.5x / losses refund half' };
+            this.showMessage(`🃏 Jester laughs: ${labels[this.jesterHandRule]}`);
+        }
         
         if (this.lastBet > 0 && this.money > 0) {
             const totalRebet = this.lastBet + this.lastSideBetPP + this.lastSideBet21Plus3;
@@ -2502,21 +2674,12 @@ class EvilCasino {
             } else {
                 this.showMessage(`Place your bet! (Last bet was $${totalRebet})`);
             }
-        } else {
+        } else if (!this.isBossFight) {
             this.showMessage("Place your bet, if you dare... 💰");
         }
         
-        // Update the money display
         this.updateDisplay();
-        
-        // Show post-round choice only if player WON (and not first round or broke)
-        if (this.handsPlayed > 0 && this.money > 0) {
-            if (this.lastRoundWon) {
-                this.showPostRoundPopup();
-            } else {
-                this.showMessage("No shop for losers! Place your bet...");
-            }
-        }
+        // No post-win shop — shops are map rooms only
     }
     
     getMinBet() {
@@ -2570,12 +2733,16 @@ class EvilCasino {
     }
     
     advanceToNextFloor() {
+        if (typeof this.advanceToNextFloorFromMap === 'function') {
+            this.advanceToNextFloorFromMap();
+            return;
+        }
         this.currentFloor++;
         this.winStreak = 0;
         const newMinBet = this.getMinBet();
         this.showMessage(`Welcome to Floor ${this.currentFloor}! Min bet: $${newMinBet}`);
         this.updateRoguelikeDisplay();
-        this.resetForNewRound();
+        this.resetForNewRound(true);
     }
     
     grantDealerPerk() {
@@ -2614,6 +2781,8 @@ class EvilCasino {
         this.totalWins = 0;
         this.activePerks = [];
         this.dealerPerks = [];
+        this.activeCurses = [];
+        this.activeRelics = [];
         this.isBossFight = false;
         this.currentBoss = null;
 
@@ -2626,8 +2795,13 @@ class EvilCasino {
         if (this.eventPopup) this.eventPopup.classList.add('hidden');
         if (this.shopPopup) this.shopPopup.classList.add('hidden');
         if (this.preRoundShopPopup) this.preRoundShopPopup.classList.add('hidden');
+        if (this.restPopup) this.restPopup.classList.add('hidden');
+        if (this.treasurePopup) this.treasurePopup.classList.add('hidden');
+        if (this.gamblePopup) this.gamblePopup.classList.add('hidden');
+        if (this.declarePopup) this.declarePopup.classList.add('hidden');
+        if (this.floorMapEl) this.floorMapEl.classList.add('hidden');
         if (this.rebetSection) this.rebetSection.classList.add('hidden');
-        if (this.tableEl) this.tableEl.classList.remove('boss-mode');
+        if (this.tableEl) this.tableEl.classList.remove('boss-mode', 'elite-mode');
         if (this.dealerHandEl) this.dealerHandEl.innerHTML = '';
         if (this.playerHandEl) this.playerHandEl.innerHTML = '';
         if (this.dealerScoreEl) this.dealerScoreEl.textContent = '';
@@ -2637,12 +2811,15 @@ class EvilCasino {
         this.clearScoreboard();
         
         this.initializeDeck();
-        
-        this.resetForNewRound();
         this.updateDisplay();
-        this.updateRoguelikeDisplay();
         
-        this.showMessage("New run! Escape with $10,000 to win! 🎰");
+        if (typeof this.initRoguelikeRun === 'function') {
+            this.initRoguelikeRun();
+        } else {
+            this.resetForNewRound(true);
+            this.updateRoguelikeDisplay();
+            this.showMessage("New run! Survive 7 floors and defeat Satan! 🎰");
+        }
     }
 
     updateDisplay() {
