@@ -1,4 +1,4 @@
-CRACKJACK - Music Folder
+EVIL CASINO - Music Folder
 =======================
 
 Add your soundtrack file here!

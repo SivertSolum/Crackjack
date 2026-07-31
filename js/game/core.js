@@ -1,7 +1,7 @@
-// CRACKJACK - Core Game Class
+// EVIL CASINO - Core Game Class
 // Main class definition with constructor and initialization
 
-class CrackJack {
+class EvilCasino {
     constructor() {
         // Basic game state
         this.money = CONFIG.STARTING_MONEY;

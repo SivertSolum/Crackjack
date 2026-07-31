@@ -1,8 +1,8 @@
-// CRACKJACK - Side Bets System
+// EVIL CASINO - Side Bets System
 // Perfect Pairs, 21+3, and side bet perk system
 
 // Side Bet Placement
-CrackJack.prototype.placeSideBet = function(btn) {
+EvilCasino.prototype.placeSideBet = function(btn) {
     if (this.gameInProgress) return;
     
     const type = btn.dataset.type;
@@ -21,14 +21,14 @@ CrackJack.prototype.placeSideBet = function(btn) {
     this.updateSideBetsDisplay();
 };
 
-CrackJack.prototype.updateSideBetsDisplay = function() {
+EvilCasino.prototype.updateSideBetsDisplay = function() {
     const total = this.sideBetPP + this.sideBet21Plus3;
     if (this.sideBetsTotalEl) {
         this.sideBetsTotalEl.textContent = `$${total}`;
     }
 };
 
-CrackJack.prototype.initializeSideBetButtons = function() {
+EvilCasino.prototype.initializeSideBetButtons = function() {
     document.querySelectorAll('.side-bet-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.amount === '0') {
@@ -39,7 +39,7 @@ CrackJack.prototype.initializeSideBetButtons = function() {
 };
 
 // Perfect Pairs Check
-CrackJack.prototype.checkPerfectPairs = function(hand) {
+EvilCasino.prototype.checkPerfectPairs = function(hand) {
     if (hand.length < 2) return null;
     
     const card1 = hand[0];
@@ -81,7 +81,7 @@ CrackJack.prototype.checkPerfectPairs = function(hand) {
 };
 
 // 21+3 Check
-CrackJack.prototype.check21Plus3 = function(playerHand, dealerHand) {
+EvilCasino.prototype.check21Plus3 = function(playerHand, dealerHand) {
     if (playerHand.length < 2 || dealerHand.length < 1) return null;
     
     const cards = [playerHand[0], playerHand[1], dealerHand[0]];
@@ -119,7 +119,7 @@ CrackJack.prototype.check21Plus3 = function(playerHand, dealerHand) {
 };
 
 // Evaluate Side Bets
-CrackJack.prototype.evaluateSideBets = async function() {
+EvilCasino.prototype.evaluateSideBets = async function() {
     const results = [];
     let totalWinnings = 0;
     let anySideBetWon = false;
@@ -195,7 +195,7 @@ CrackJack.prototype.evaluateSideBets = async function() {
 };
 
 // Show Side Bet Results
-CrackJack.prototype.showSideBetResults = async function(results) {
+EvilCasino.prototype.showSideBetResults = async function(results) {
     for (const result of results) {
         if (result.result) {
             const popup = document.createElement('div');
@@ -215,11 +215,11 @@ CrackJack.prototype.showSideBetResults = async function(results) {
 };
 
 // Side Bet Perks
-CrackJack.prototype.hasSideBetPerk = function(perkId) {
+EvilCasino.prototype.hasSideBetPerk = function(perkId) {
     return this.sideBetStats.unlockedPerks.includes(perkId);
 };
 
-CrackJack.prototype.checkSideBetMilestones = function() {
+EvilCasino.prototype.checkSideBetMilestones = function() {
     const milestones = CONFIG.SIDE_BET_MILESTONES;
     if (!milestones || !this.allSideBetPerks) return;
     
@@ -241,7 +241,7 @@ CrackJack.prototype.checkSideBetMilestones = function() {
     }
 };
 
-CrackJack.prototype.showSideBetPerkUnlock = function(perk) {
+EvilCasino.prototype.showSideBetPerkUnlock = function(perk) {
     const popup = document.createElement('div');
     popup.className = 'side-bet-perk-unlock';
     popup.innerHTML = `

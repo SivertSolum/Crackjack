@@ -1,8 +1,8 @@
-// CRACKJACK - Deck Management
+// EVIL CASINO - Deck Management
 // Deck operations, card logic, and card tracking
 
 // Deck Management
-CrackJack.prototype.createFullDeck = function() {
+EvilCasino.prototype.createFullDeck = function() {
     const deck = [];
     for (const suit of this.suits) {
         for (const value of this.values) {
@@ -12,7 +12,7 @@ CrackJack.prototype.createFullDeck = function() {
     return deck;
 };
 
-CrackJack.prototype.shuffleDeck = function(deck) {
+EvilCasino.prototype.shuffleDeck = function(deck) {
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -20,19 +20,19 @@ CrackJack.prototype.shuffleDeck = function(deck) {
     return deck;
 };
 
-CrackJack.prototype.initializeDeck = function() {
+EvilCasino.prototype.initializeDeck = function() {
     this.deck = this.shuffleDeck(this.createFullDeck());
     this.updateDeckDisplay();
     this.resetCardTracker();
 };
 
-CrackJack.prototype.checkAndReshuffle = async function() {
+EvilCasino.prototype.checkAndReshuffle = async function() {
     if (this.deck.length <= this.SHUFFLE_THRESHOLD) {
         await this.performReshuffle();
     }
 };
 
-CrackJack.prototype.performReshuffle = async function() {
+EvilCasino.prototype.performReshuffle = async function() {
     if (this.shuffleOverlay) this.shuffleOverlay.classList.remove('hidden');
     if (this.deckAreaEl) this.deckAreaEl.classList.add('shuffling');
     
@@ -48,7 +48,7 @@ CrackJack.prototype.performReshuffle = async function() {
     if (this.shuffleOverlay) this.shuffleOverlay.classList.add('hidden');
 };
 
-CrackJack.prototype.drawCardFromDeck = function() {
+EvilCasino.prototype.drawCardFromDeck = function() {
     if (this.deck.length === 0) {
         this.deck = this.shuffleDeck(this.createFullDeck());
         this.resetCardTracker();
@@ -59,11 +59,11 @@ CrackJack.prototype.drawCardFromDeck = function() {
     return card;
 };
 
-CrackJack.prototype.drawCard = function() {
+EvilCasino.prototype.drawCard = function() {
     return this.drawCardFromDeck();
 };
 
-CrackJack.prototype.updateDeckDisplay = function() {
+EvilCasino.prototype.updateDeckDisplay = function() {
     if (!this.deckCountEl || !this.deckPileEl) {
         return;
     }
@@ -97,14 +97,14 @@ CrackJack.prototype.updateDeckDisplay = function() {
 };
 
 // Card Tracking
-CrackJack.prototype.pendingPlayedCards = [];
+EvilCasino.prototype.pendingPlayedCards = [];
 
-CrackJack.prototype.markCardPlayed = function(card) {
+EvilCasino.prototype.markCardPlayed = function(card) {
     const cardKey = `${card.value}${card.suit}`;
     this.pendingPlayedCards.push(cardKey);
 };
 
-CrackJack.prototype.commitPlayedCards = function() {
+EvilCasino.prototype.commitPlayedCards = function() {
     this.pendingPlayedCards.forEach(cardKey => {
         const trackerCard = document.querySelector(`.tracker-card[data-card="${cardKey}"]`);
         if (trackerCard) {
@@ -114,7 +114,7 @@ CrackJack.prototype.commitPlayedCards = function() {
     this.pendingPlayedCards = [];
 };
 
-CrackJack.prototype.resetCardTracker = function() {
+EvilCasino.prototype.resetCardTracker = function() {
     document.querySelectorAll('.tracker-card').forEach(card => {
         card.classList.remove('played');
     });
@@ -122,7 +122,7 @@ CrackJack.prototype.resetCardTracker = function() {
 };
 
 // Card Value & Score Calculation
-CrackJack.prototype.getCardValue = function(card, currentScore = 0) {
+EvilCasino.prototype.getCardValue = function(card, currentScore = 0) {
     if (['J', 'Q', 'K'].includes(card.value)) return 10;
     if (card.value === 'A') {
         return (currentScore + 11 <= 21) ? 11 : 1;
@@ -130,7 +130,7 @@ CrackJack.prototype.getCardValue = function(card, currentScore = 0) {
     return parseInt(card.value);
 };
 
-CrackJack.prototype.calculateScore = function(hand, isPlayer = false) {
+EvilCasino.prototype.calculateScore = function(hand, isPlayer = false) {
     let score = 0;
     let aces = 0;
 
@@ -157,11 +157,11 @@ CrackJack.prototype.calculateScore = function(hand, isPlayer = false) {
     return score;
 };
 
-CrackJack.prototype.getRandomSuit = function() {
+EvilCasino.prototype.getRandomSuit = function() {
     return this.suits[Math.floor(Math.random() * this.suits.length)];
 };
 
-CrackJack.prototype.createCard = function(value) {
+EvilCasino.prototype.createCard = function(value) {
     const index = this.deck.findIndex(c => c.value === value);
     if (index !== -1) {
         const card = this.deck.splice(index, 1)[0];
@@ -174,7 +174,7 @@ CrackJack.prototype.createCard = function(value) {
     return fallbackCard;
 };
 
-CrackJack.prototype.createCardElement = function(card, faceDown = false) {
+EvilCasino.prototype.createCardElement = function(card, faceDown = false) {
     const cardEl = document.createElement('div');
     cardEl.className = 'card dealing';
     

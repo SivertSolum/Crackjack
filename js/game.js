@@ -1,7 +1,7 @@
-// CRACKJACK - Main Game Class
+// EVIL CASINO - Main Game Class
 // The world's most "fair" blackjack game
 
-class CrackJack {
+class EvilCasino {
     constructor() {
         this.money = CONFIG.STARTING_MONEY;
         this.currentBet = 0;

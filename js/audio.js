@@ -1,4 +1,4 @@
-// CRACKJACK - Audio System
+// EVIL CASINO - Audio System
 // Web Audio API synthesized sounds and music controls
 
 let bgMusic = null;

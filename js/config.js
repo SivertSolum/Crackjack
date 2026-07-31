@@ -1,4 +1,4 @@
-// CRACKJACK - Game Configuration
+// EVIL CASINO - Game Configuration
 // Roguelike Dungeon Crawler Edition
 
 // Version and Changelog

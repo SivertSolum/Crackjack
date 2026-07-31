@@ -1,4 +1,4 @@
-// CRACKJACK - UI System
+// EVIL CASINO - UI System
 // Menu navigation and UI helpers
 
 function showMainMenu() {
@@ -61,7 +61,7 @@ function startGame() {
     }
     
     if (!window.game) {
-        window.game = new CrackJack();
+        window.game = new EvilCasino();
         window.game.initializeDeck();
     }
 }

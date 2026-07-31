@@ -1,4 +1,4 @@
-# 🃏 CRACKJACK 🃏
+# 🃏 EVIL CASINO 🃏
 
 ### *"Definitely Not Rigged"™*
 
@@ -6,11 +6,11 @@ A darkly hilarious roguelike blackjack game where you face off against Satan him
 
 ---
 
-## [Play Now on GitHub Pages](https://sivertsolum.github.io/Crackjack/)
+## [Play Now on GitHub Pages](https://sivertsolum.github.io/EvilCasino/)
 
 <!-- 
   ⬆️ UPDATE THIS LINK: Replace YOUR_USERNAME with your GitHub username
-  Example: https://johndoe.github.io/crackjack/Crackjack/
+  Example: https://johndoe.github.io/EvilCasino/
 -->
 
 > ⚠️ **Warning:** You WILL lose. The house always wins. (But that's part of the fun!)
@@ -138,19 +138,18 @@ A darkly hilarious roguelike blackjack game where you face off against Satan him
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/crackjack.git
-   cd crackjack
+   git clone https://github.com/YOUR_USERNAME/EvilCasino.git
+   cd EvilCasino
    ```
 
-2. Open `Crackjack/index.html` directly in your browser, or serve with a local server:
+2. Open `index.html` directly in your browser, or serve with a local server:
    ```bash
    # Python 3
-   cd Crackjack
    python -m http.server 8000
    # Then visit http://localhost:8000
    
    # Or use Node.js
-   npx serve Crackjack
+   npx serve .
    ```
 
 3. The game works best in modern browsers (Chrome, Firefox, Edge)

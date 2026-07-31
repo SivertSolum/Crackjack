@@ -1,4 +1,4 @@
-CRACKJACK - Sound Effects Folder
+EVIL CASINO - Sound Effects Folder
 ================================
 
 Add your sound effect files here!

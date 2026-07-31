@@ -1,7 +1,7 @@
-// CRACKJACK - Betting System
+// EVIL CASINO - Betting System
 // Bet placement, same bet, and bet validation
 
-CrackJack.prototype.getMinBet = function() {
+EvilCasino.prototype.getMinBet = function() {
     let minBet = CONFIG.MIN_BET_PER_FLOOR[this.currentFloor - 1] || 10;
     
     // Elite modifiers
@@ -12,7 +12,7 @@ CrackJack.prototype.getMinBet = function() {
     return minBet;
 };
 
-CrackJack.prototype.placeBet = function(btn) {
+EvilCasino.prototype.placeBet = function(btn) {
     if (this.gameInProgress) return;
 
     const amount = btn.dataset.amount;
@@ -55,7 +55,7 @@ CrackJack.prototype.placeBet = function(btn) {
     }
 };
 
-CrackJack.prototype.sameBet = function() {
+EvilCasino.prototype.sameBet = function() {
     if (this.gameInProgress) return;
     if (this.lastBet <= 0) return;
 

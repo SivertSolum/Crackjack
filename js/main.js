@@ -1,4 +1,4 @@
-// CRACKJACK - Main Entry Point
+// EVIL CASINO - Main Entry Point
 // Initializes the game and sets up event listeners
 
 // Viewport scaling for proportional UI
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         menuBtn.addEventListener('click', backToMenu);
     }
     
-    console.log('%c🎰 CRACKJACK LOADED 🎰', 'font-size: 24px; color: gold; background: purple;');
+    console.log('%c🎰 EVIL CASINO LOADED 🎰', 'font-size: 24px; color: gold; background: purple;');
     console.log('%cNow with MORE ways to lose!', 'font-size: 12px; color: red;');
 });
 
