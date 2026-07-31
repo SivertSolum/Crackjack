@@ -102,6 +102,7 @@ class EvilCasino {
         this.perkTooltipDesc = document.getElementById('perk-tooltip-desc');
         this.messageEl = document.getElementById('message');
         this.bettingControls = document.getElementById('betting-controls');
+        this.bettingActions = document.getElementById('betting-actions');
         this.gameControls = document.getElementById('game-controls');
         this.dealBtn = document.getElementById('deal-btn');
         this.hitBtn = document.getElementById('hit-btn');
@@ -964,6 +965,7 @@ class EvilCasino {
 
         this.gameInProgress = true;
         this.bettingControls.classList.add('hidden');
+        if (this.bettingActions) this.bettingActions.classList.add('hidden');
         this.gameControls.classList.remove('hidden');
 
         this.playerHand = [];
@@ -2453,6 +2455,7 @@ class EvilCasino {
         this.sideBet21Plus3 = 0;
         this.betHistory = [];
         this.bettingControls.classList.remove('hidden');
+        if (this.bettingActions) this.bettingActions.classList.remove('hidden');
         this.gameControls.classList.add('hidden');
         this.dealBtn.disabled = true;
         this.hitBtn.disabled = false;

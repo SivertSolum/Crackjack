@@ -334,14 +334,9 @@
                 <div class="hand" id="player-hand"></div>
                 <div class="score" id="player-score"></div>
                 <div class="bust-probability hidden" id="bust-probability">Bust: 0%</div>
-            </div>
-        </div>
 
-        <div class="controls">
-            <div class="betting-controls" id="betting-controls">
-                <!-- Bet Areas on Table -->
-                <div class="betting-table">
-                    <!-- Side Bet Areas -->
+                <!-- Bet areas + chips sit on the green felt during betting -->
+                <div class="betting-controls" id="betting-controls">
                     <div class="bet-areas-row">
                         <div class="bet-area side-bet-area" id="pp-bet-area" data-bet-type="pp">
                             <div class="bet-area-label">PERFECT PAIRS</div>
@@ -361,10 +356,6 @@
                             <div class="bet-area-total" id="21plus3-bet-total">$0</div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Chip Selector -->
-                <div class="chip-selector">
                     <div class="chip-tray">
                         <div class="chip" data-value="1" style="--chip-color: #808080; --chip-accent: #a0a0a0;">
                             <span class="chip-value">1</span>
@@ -385,25 +376,28 @@
                             <span class="chip-value">500</span>
                         </div>
                     </div>
-                    
-                    <div class="betting-actions">
-                        <button class="betting-action-btn undo-btn" id="undo-bet-btn" disabled>
-                            UNDO
-                        </button>
-                        <button class="betting-action-btn clear-btn" id="clear-bets-btn" disabled>
-                            CLEAR
-                        </button>
-                        <button class="betting-action-btn rebet-btn" id="same-bet-btn">
-                            REBET
-                        </button>
-                        <button class="betting-action-btn double-bet-btn" id="double-bet-btn" disabled>
-                            2X
-                        </button>
-                        <button class="betting-action-btn deal-btn" id="deal-btn" disabled>
-                            DEAL
-                        </button>
-                    </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <!-- Betting actions occupy the same bar as hit/stand during betting -->
+            <div class="betting-actions" id="betting-actions">
+                <button class="betting-action-btn undo-btn" id="undo-bet-btn" disabled>
+                    UNDO
+                </button>
+                <button class="betting-action-btn clear-btn" id="clear-bets-btn" disabled>
+                    CLEAR
+                </button>
+                <button class="betting-action-btn rebet-action-btn" id="same-bet-btn">
+                    REBET
+                </button>
+                <button class="betting-action-btn double-bet-btn" id="double-bet-btn" disabled>
+                    2X
+                </button>
+                <button class="betting-action-btn deal-btn" id="deal-btn" disabled>
+                    DEAL
+                </button>
             </div>
 
             <div class="game-controls hidden" id="game-controls">
