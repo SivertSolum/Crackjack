@@ -1808,6 +1808,14 @@ class EvilCasino {
                 return;
             }
 
+            // Combat rooms: a loss ends the fight — return to map and continue the path
+            if (this.roomMode === 'combat' && !this.isBossFight && playerWon === false) {
+                this.combatCleared = false;
+                this.showMessage('Fight lost — continuing the path...');
+                setTimeout(() => this.finishCurrentRoom(), 900);
+                return;
+            }
+
             this.resetForNewRound(true);
         }, 1800);
     }

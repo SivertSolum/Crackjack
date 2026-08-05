@@ -22,6 +22,32 @@ const FloorMap = {
     },
 
     /**
+     * Indices in the next column that are geometrically adjacent to fromIndex.
+     * Uses lane-interval overlap so a 2→3 widening always exposes both
+     * adjacent options (top→top+middle, bottom→middle+bottom).
+     */
+    getAdjacentIndices(fromIndex, fromCount, toCount) {
+        if (toCount <= 0) return [];
+        if (toCount === 1) return [0];
+        if (fromCount <= 1) {
+            return Array.from({ length: toCount }, (_, i) => i);
+        }
+
+        const picks = new Set();
+        const lo = Math.floor(fromIndex * toCount / fromCount);
+        const hi = Math.ceil((fromIndex + 1) * toCount / fromCount) - 1;
+        for (let j = lo; j <= hi; j++) {
+            if (j >= 0 && j < toCount) picks.add(j);
+        }
+
+        // Always include the nearest center-mapped row
+        const preferred = Math.round(fromIndex * (toCount - 1) / (fromCount - 1));
+        picks.add(Math.max(0, Math.min(toCount - 1, preferred)));
+
+        return [...picks].sort((a, b) => a - b);
+    },
+
+    /**
      * Generate a branching floor map.
      * @returns {{ columns: Array<Array<node>>, bossNode: node }}
      */
@@ -81,20 +107,13 @@ const FloorMap = {
         };
         columns.push([bossNode]);
 
-        // Wire connections: each node connects to 1–2 nodes in the next column
+        // Wire connections: each node links to geometrically adjacent next-column nodes
         for (let c = 0; c < columns.length - 1; c++) {
             const curr = columns[c];
             const next = columns[c + 1];
             curr.forEach((node, i) => {
-                const targets = new Set();
-                // Prefer nearby row
-                const preferred = Math.min(next.length - 1, Math.round((i / Math.max(1, curr.length - 1)) * (next.length - 1)));
-                targets.add(preferred);
-                if (next.length > 1 && Math.random() < 0.55) {
-                    const alt = (preferred + 1 + Math.floor(Math.random() * (next.length - 1))) % next.length;
-                    targets.add(alt);
-                }
-                node.connections = [...targets].map(idx => next[idx].id);
+                const targets = this.getAdjacentIndices(i, curr.length, next.length);
+                node.connections = targets.map(idx => next[idx].id);
             });
             // Ensure every next node is reachable from something
             next.forEach(n => {

@@ -26,4 +26,4 @@ Alternatively: `npx serve .`
 
 ## Test
 
-Manual browser testing only. Uses Web Audio API for SFX and localStorage for saves.
+Manual browser testing only. Uses Web Audio API for SFX. No `localStorage` / save system — settings reset on refresh.

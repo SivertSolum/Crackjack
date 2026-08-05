@@ -358,6 +358,11 @@ Object.assign(EvilCasino.prototype, {
     },
 
     finishCurrentRoom() {
+        if (this.tableEl) this.tableEl.classList.remove('boss-mode', 'elite-mode');
+        this.isEliteFight = false;
+        this.isBossFight = false;
+        this.currentElite = null;
+
         if (!this.currentRoom || !this.floorMap) {
             this.showFloorMap();
             return;
