@@ -224,13 +224,23 @@ Object.assign(EvilCasino.prototype, {
         if (this.floorMapContractEl) {
             const status = this.contractComplete ? '✓ DONE — ' : '⚠ Must finish before boss clear — ';
             this.floorMapContractEl.textContent = status + this.getContractLabel();
+            this.floorMapContractEl.classList.toggle('anim-contract-done', this.contractComplete);
         }
         this.renderFloorMap();
-        this.floorMapEl.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.floorMapEl);
+        } else {
+            this.floorMapEl.classList.remove('hidden');
+        }
     },
 
     hideFloorMap() {
-        if (this.floorMapEl) this.floorMapEl.classList.add('hidden');
+        if (!this.floorMapEl) return;
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.closePopup(this.floorMapEl);
+        } else {
+            this.floorMapEl.classList.add('hidden');
+        }
         this.hideTableForMap(false);
     },
 
@@ -253,7 +263,12 @@ Object.assign(EvilCasino.prototype, {
                 const btn = document.createElement('button');
                 btn.className = 'map-node';
                 btn.dataset.type = node.type;
-                if (node.completed) btn.classList.add('completed');
+                if (node.completed) {
+                    btn.classList.add('completed');
+                    if (node.id === this._justCompletedNodeId) {
+                        btn.classList.add('anim-node-complete');
+                    }
+                }
                 if (node.available) btn.classList.add('available');
                 if (node.type === 'boss' && !this.contractComplete && this.contract?.type !== 'defeatBoss') {
                     btn.classList.add('contract-risk');
@@ -278,10 +293,19 @@ Object.assign(EvilCasino.prototype, {
             if (colIndex < map.columns.length - 1) {
                 const spacer = document.createElement('div');
                 spacer.className = 'map-connector';
+                if (this._justCompletedNodeId && col.some(n => n.id === this._justCompletedNodeId)) {
+                    spacer.classList.add('anim-connector-lit');
+                }
                 spacer.textContent = '›';
                 this.floorMapNodesEl.appendChild(spacer);
             }
         });
+
+        this._justCompletedNodeId = null;
+
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.staggerChildren(this.floorMapNodesEl, '.map-column', 'anim-map-column-enter', 80);
+        }
     },
 
     enterMapNode(nodeId) {
@@ -375,6 +399,7 @@ Object.assign(EvilCasino.prototype, {
             }
             // Elite reward: perk choice
             this.offerRoomPerkReward(() => {
+                this._justCompletedNodeId = this.currentRoom.id;
                 FloorMap.completeNode(this.floorMap, this.currentRoom.id, true);
                 this.currentRoom = null;
                 this.updateRoguelikeDisplay();
@@ -383,6 +408,7 @@ Object.assign(EvilCasino.prototype, {
             return;
         }
 
+        this._justCompletedNodeId = this.currentRoom.id;
         FloorMap.completeNode(this.floorMap, this.currentRoom.id, true);
         this.currentRoom = null;
         this.updateRoguelikeDisplay();
@@ -410,7 +436,11 @@ Object.assign(EvilCasino.prototype, {
                 const newPerk = { ...perk };
                 if (newPerk.maxUses) newPerk.uses = newPerk.maxUses;
                 this.activePerks.push(newPerk);
-                this.upgradePopup.classList.add('hidden');
+                if (typeof GameAnimations !== 'undefined') {
+                    GameAnimations.closePopup(this.upgradePopup);
+                } else {
+                    this.upgradePopup.classList.add('hidden');
+                }
                 this.updateRoguelikeDisplay();
                 onDone();
             });
@@ -421,11 +451,20 @@ Object.assign(EvilCasino.prototype, {
         skip.textContent = 'Skip Reward';
         skip.style.marginTop = '12px';
         skip.addEventListener('click', () => {
-            this.upgradePopup.classList.add('hidden');
+            if (typeof GameAnimations !== 'undefined') {
+                GameAnimations.closePopup(this.upgradePopup);
+            } else {
+                this.upgradePopup.classList.add('hidden');
+            }
             onDone();
         });
         this.upgradeOptionsEl.appendChild(skip);
-        this.upgradePopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.upgradePopup);
+            GameAnimations.staggerChildren(this.upgradeOptionsEl, '.upgrade-card', 'anim-popup-enter', 80);
+        } else {
+            this.upgradePopup.classList.remove('hidden');
+        }
     },
 
     // === BOSS ===
@@ -442,11 +481,20 @@ Object.assign(EvilCasino.prototype, {
             rule += `\n⚠ Contract incomplete — beat them anyway and you still forfeit.`;
         }
         if (this.bossRuleEl) this.bossRuleEl.textContent = rule;
-        this.bossPopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.bossPopup);
+            GameAnimations.staggerPopupContent(this.bossPopup, '.boss-portrait, .boss-content h2, .boss-description, .boss-rule, #boss-fight-btn', 'anim-popup-enter', 60);
+        } else {
+            this.bossPopup.classList.remove('hidden');
+        }
     },
 
     startBossFight() {
-        this.bossPopup.classList.add('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.closePopup(this.bossPopup);
+        } else {
+            this.bossPopup.classList.add('hidden');
+        }
         this.isBossFight = true;
         this.currentBoss = this.currentFloorBoss;
         this.roomMode = 'combat';
@@ -565,12 +613,20 @@ Object.assign(EvilCasino.prototype, {
             btn.innerHTML = `${opt.icon} ${opt.name}<span class="choice-cost">${opt.desc}</span>`;
             btn.addEventListener('click', () => {
                 this.applyRestOption(opt);
-                this.restPopup.classList.add('hidden');
+                if (typeof GameAnimations !== 'undefined') {
+                    GameAnimations.closePopup(this.restPopup);
+                } else {
+                    this.restPopup.classList.add('hidden');
+                }
                 this.finishCurrentRoom();
             });
             optionsEl.appendChild(btn);
         });
-        this.restPopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.restPopup);
+        } else {
+            this.restPopup.classList.remove('hidden');
+        }
     },
 
     applyRestOption(opt) {
@@ -623,9 +679,17 @@ Object.assign(EvilCasino.prototype, {
         }
         if (this.treasurePopup) {
             document.getElementById('treasure-result').textContent = msg;
-            this.treasurePopup.classList.remove('hidden');
+            if (typeof GameAnimations !== 'undefined') {
+                GameAnimations.openPopup(this.treasurePopup);
+            } else {
+                this.treasurePopup.classList.remove('hidden');
+            }
             document.getElementById('treasure-continue-btn').onclick = () => {
-                this.treasurePopup.classList.add('hidden');
+                if (typeof GameAnimations !== 'undefined') {
+                    GameAnimations.closePopup(this.treasurePopup);
+                } else {
+                    this.treasurePopup.classList.add('hidden');
+                }
                 this.updateDisplay();
                 this.finishCurrentRoom();
             };
@@ -669,7 +733,11 @@ Object.assign(EvilCasino.prototype, {
                 } else {
                     this.showMessage(`🎰 Lost $${stake}`);
                 }
-                this.gamblePopup.classList.add('hidden');
+                if (typeof GameAnimations !== 'undefined') {
+                    GameAnimations.closePopup(this.gamblePopup);
+                } else {
+                    this.gamblePopup.classList.add('hidden');
+                }
                 this.updateDisplay();
                 if (this.money <= 0) this.showBrokeScreen();
                 else this.finishCurrentRoom();
@@ -680,19 +748,37 @@ Object.assign(EvilCasino.prototype, {
         skip.className = 'event-choice-btn';
         skip.textContent = 'Leave';
         skip.addEventListener('click', () => {
-            this.gamblePopup.classList.add('hidden');
+            if (typeof GameAnimations !== 'undefined') {
+                GameAnimations.closePopup(this.gamblePopup);
+            } else {
+                this.gamblePopup.classList.add('hidden');
+            }
             this.finishCurrentRoom();
         });
         el.appendChild(skip);
-        this.gamblePopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.gamblePopup);
+        } else {
+            this.gamblePopup.classList.remove('hidden');
+        }
     },
 
     hideDeclarePopup() {
-        if (this.declarePopup) this.declarePopup.classList.add('hidden');
+        if (!this.declarePopup) return;
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.closePopup(this.declarePopup);
+        } else {
+            this.declarePopup.classList.add('hidden');
+        }
     },
 
     showDeclarePopup() {
-        if (this.declarePopup) this.declarePopup.classList.remove('hidden');
+        if (!this.declarePopup) return;
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.declarePopup);
+        } else {
+            this.declarePopup.classList.remove('hidden');
+        }
     },
 
     hasRelic(id) {

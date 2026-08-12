@@ -16,6 +16,13 @@ class EvilCasino {
         this.timesLost = 0;
         this.lastRoundWon = false;
 
+        // Animation tracking
+        this._lastMoney = CONFIG.STARTING_MONEY;
+        this._pendingMoneyDelta = 0;
+        this._lastPlayerScore = null;
+        this._lastDealerScore = null;
+        this._lastBustRisk = 0;
+
         // Roguelike elements
         this.currentFloor = 1;
         this.winStreak = 0;
@@ -475,13 +482,15 @@ class EvilCasino {
     updateBustProbability() {
         if (!this.bustProbabilityEl) return;
         
-        // Only show if player has the Card Counter perk and game is in progress
         if (!this.hasPerk('counter') || !this.gameInProgress || this.playerHand.length === 0) {
             this.bustProbabilityEl.classList.add('hidden');
+            this.bustProbabilityEl.classList.remove('anim-bust-warn');
+            this._lastBustRisk = 0;
             return;
         }
         
         const probability = this.calculateBustProbability();
+        const prevRisk = this._lastBustRisk || 0;
         this.bustProbabilityEl.textContent = `🧠 Bust: ${probability}%`;
         this.bustProbabilityEl.classList.remove('hidden', 'low-risk', 'medium-risk', 'high-risk');
         
@@ -492,6 +501,13 @@ class EvilCasino {
         } else {
             this.bustProbabilityEl.classList.add('high-risk');
         }
+
+        if ((prevRisk <= 50 && probability > 50) || (prevRisk <= 75 && probability > 75)) {
+            this.bustProbabilityEl.classList.add('anim-bust-warn');
+        } else if (probability <= 50) {
+            this.bustProbabilityEl.classList.remove('anim-bust-warn');
+        }
+        this._lastBustRisk = probability;
     }
 
     getRandomSuit() {
@@ -745,24 +761,29 @@ class EvilCasino {
     clearAllBets() {
         if (this.gameInProgress) return;
         
-        this.currentBet = 0;
-        this.sideBetPP = 0;
-        this.sideBet21Plus3 = 0;
-        this.betHistory = [];
+        const stacks = [this.mainChipStack, this.ppChipStack, this.plus3ChipStack].filter(Boolean);
+        const chips = stacks.flatMap(s => Array.from(s.querySelectorAll('.chip')));
         
-        // Clear all chip stacks
-        if (this.mainChipStack) this.mainChipStack.innerHTML = '';
-        if (this.ppChipStack) this.ppChipStack.innerHTML = '';
-        if (this.plus3ChipStack) this.plus3ChipStack.innerHTML = '';
-        
-        // Reset totals
-        if (this.mainBetTotal) this.mainBetTotal.textContent = '$0';
-        if (this.ppBetTotal) this.ppBetTotal.textContent = '$0';
-        if (this.plus3BetTotal) this.plus3BetTotal.textContent = '$0';
-        if (this.currentBetDisplay) this.currentBetDisplay.textContent = '$0';
-        
-        this.updateBettingButtons();
-        this.showMessage("All bets cleared. Starting fresh!");
+        const finishClear = () => {
+            this.currentBet = 0;
+            this.sideBetPP = 0;
+            this.sideBet21Plus3 = 0;
+            this.betHistory = [];
+            stacks.forEach(s => { s.innerHTML = ''; });
+            if (this.mainBetTotal) this.mainBetTotal.textContent = '$0';
+            if (this.ppBetTotal) this.ppBetTotal.textContent = '$0';
+            if (this.plus3BetTotal) this.plus3BetTotal.textContent = '$0';
+            if (this.currentBetDisplay) this.currentBetDisplay.textContent = '$0';
+            this.updateBettingButtons();
+            this.showMessage("All bets cleared. Starting fresh!");
+        };
+
+        if (chips.length && typeof GameAnimations !== 'undefined') {
+            chips.forEach(c => c.classList.add('anim-chip-clear'));
+            setTimeout(finishClear, 150);
+        } else {
+            finishClear();
+        }
     }
     
     rebetLastBet() {
@@ -884,8 +905,7 @@ class EvilCasino {
     // === GAME ACTIONS ===
 
     isPopupOpen() {
-        // Check if any popup is currently visible
-        const popups = document.querySelectorAll('.popup:not(.hidden)');
+        const popups = document.querySelectorAll('.popup:not(.hidden):not(.popup-closing)');
         return popups.length > 0;
     }
 
@@ -948,6 +968,7 @@ class EvilCasino {
         if (this.hasCurse && this.hasCurse('heavyDebt')) {
             const cost = 25;
             this.money -= cost;
+            this.applyMoneyChange(-cost);
             this.showMessage(`💸 Heavy Debt: -$${cost}`);
             this.updateDisplay();
         }
@@ -955,6 +976,7 @@ class EvilCasino {
         // Zen Mind perk: gain money at start of hand
         if (this.hasPerk && this.hasPerk('meditation')) {
             this.money += 30;
+            this.applyMoneyChange(30);
             this.showMessage("🧘 Zen Mind: +$30");
             this.updateDisplay();
         }
@@ -965,7 +987,18 @@ class EvilCasino {
         if (this.isBossFight && this.currentBoss?.burnCard) {
             const burned = this.drawCard();
             this.showMessage(`🕷️ Black Widow burns ${burned.value}${burned.suit}...`);
+            if (typeof GameAnimations !== 'undefined' && this.deckAreaEl) {
+                const burnEl = document.createElement('div');
+                burnEl.className = 'card burn-card-temp anim-boss-burn';
+                const isRed = ['♥', '♦'].includes(burned.suit);
+                burnEl.classList.add(isRed ? 'red' : 'black');
+                burnEl.innerHTML = `<div class="card-center">${burned.value}${burned.suit}</div>`;
+                this.deckAreaEl.appendChild(burnEl);
+                setTimeout(() => burnEl.remove(), 600);
+            }
         }
+
+        await this.animateCollectChips();
 
         // Save bets for rebet functionality
         this.lastBet = this.currentBet;
@@ -981,6 +1014,7 @@ class EvilCasino {
                 this.showMessage(`🛡️ Side Insurance: Saved $${sideBetDiscount} on side bets!`);
             }
         }
+        this.applyMoneyChange(-(this.currentBet + totalSideBets));
         
         this.updateDisplay();
 
@@ -1012,8 +1046,13 @@ class EvilCasino {
 
         // Lady Luck: hide cards until stand
         if (this.isBossFight && this.currentBoss?.hideCards) {
-            this.playerHandEl.querySelectorAll('.card').forEach(c => c.classList.add('face-down', 'hidden-by-boss'));
-            this.dealerHandEl.querySelectorAll('.card').forEach(c => c.classList.add('face-down', 'hidden-by-boss'));
+            const allCards = [
+                ...this.playerHandEl.querySelectorAll('.card'),
+                ...this.dealerHandEl.querySelectorAll('.card')
+            ];
+            for (const c of allCards) {
+                c.classList.add('face-down', 'hidden-by-boss');
+            }
             this.showMessage('🎭 Lady Luck hides all cards until you stand!');
         }
 
@@ -1025,7 +1064,7 @@ class EvilCasino {
             playLoseSound();
             this.showMessage(this.getRandomMessage(this.dealerBlackjackMessages), 'lose');
             this.addToHistory(playerScore, dealerScore, 'loss');
-            this.endRound(false, true);
+            await this.finishRoundWithBeat(false, true);
             return;
         }
 
@@ -1034,7 +1073,7 @@ class EvilCasino {
             playWinSound();
             this.showMessage("BLACKJACK! Wait, YOU got it?! *suspicious shuffling*", 'win');
             this.addToHistory(playerScore, dealerScore, 'win');
-            this.endRound(true, true);
+            await this.finishRoundWithBeat(true, true);
             return;
         }
 
@@ -1120,6 +1159,7 @@ class EvilCasino {
         
         if (this.isBossFight && this.currentBoss?.hitCost) {
             this.money -= this.currentBoss.hitCost;
+            this.applyMoneyChange(-this.currentBoss.hitCost);
             this.showMessage(`💸 The Countess drains $${this.currentBoss.hitCost}!`, 'lose');
             this.updateDisplay();
         }
@@ -1165,13 +1205,17 @@ class EvilCasino {
             this.showMessage(this.getRandomMessage(this.bustMessages), 'lose');
             if (this.isBossFight && this.currentBoss?.bustPenalty) {
                 this.money = Math.max(0, this.money - this.currentBet);
+                this.applyMoneyChange(-this.currentBet);
                 this.showMessage(`🪢 Hangman: Extra bust penalty -$${this.currentBet}!`, 'lose');
                 this.updateDisplay();
+                if (typeof GameAnimations !== 'undefined') {
+                    await GameAnimations.shakeTable(this.tableEl);
+                }
             }
             await this.revealDealerCard();
             const dealerScore = this.calculateScore(this.dealerHand);
             this.addToHistory(score, dealerScore, 'loss');
-            this.endRound(false);
+            await this.finishRoundWithBeat(false);
         } else if (score === 21) {
             this.showMessage("21! Let's see the dealer's response...");
             await this.delay(400);
@@ -1203,7 +1247,7 @@ class EvilCasino {
             // Move to next hand or resolve
             if (this.currentSplitHandIndex === 0) {
                 this.currentSplitHandIndex = 1;
-                this.renderSplitHands();
+                this.updateSplitActiveHand();
                 this.showMessage("Now playing Hand 2...");
                 // Re-enable buttons for hand 2
                 this.hitBtn.disabled = false;
@@ -1268,7 +1312,7 @@ class EvilCasino {
                 // Move to next hand or resolve
                 if (this.currentSplitHandIndex === 0) {
                     this.currentSplitHandIndex = 1;
-                    this.renderSplitHands();
+                    this.updateSplitActiveHand();
                     this.showMessage("Now playing Hand 2...");
                     this.hitBtn.disabled = false;
                     this.standBtn.disabled = false;
@@ -1284,7 +1328,7 @@ class EvilCasino {
                 
                 if (this.currentSplitHandIndex === 0) {
                     this.currentSplitHandIndex = 1;
-                    this.renderSplitHands();
+                    this.updateSplitActiveHand();
                     this.showMessage("Now playing Hand 2...");
                     this.hitBtn.disabled = false;
                     this.standBtn.disabled = false;
@@ -1318,7 +1362,7 @@ class EvilCasino {
                 await this.revealDealerCard();
                 const dealerScore = this.calculateScore(this.dealerHand);
                 this.addToHistory(score, dealerScore, 'loss');
-                this.endRound(false);
+                await this.finishRoundWithBeat(false);
             } else {
                 // After doubling, player must stand - dealer plays
                 this.isProcessingAction = false;
@@ -1477,6 +1521,7 @@ class EvilCasino {
         
         if (results.length > 0) {
             this.money += totalWinnings;
+            if (totalWinnings > 0) this.applyMoneyChange(totalWinnings);
             this.updateDisplay();
             await this.showSideBetResults(results);
         }
@@ -1494,9 +1539,21 @@ class EvilCasino {
                 `;
                 document.body.appendChild(popup);
                 if (typeof playWinSound === 'function') playWinSound();
+
+                const areaId = result.bet === 'Perfect Pairs' ? 'pp-bet-area' : '21plus3-bet-area';
+                const area = document.getElementById(areaId);
+                if (area && typeof GameAnimations !== 'undefined') {
+                    GameAnimations.playAnimation(area, 'anim-sidebet-glow', { durationMs: 500 });
+                }
                 
                 await this.delay(1500);
                 popup.remove();
+            } else {
+                const areaId = result.bet === 'Perfect Pairs' ? 'pp-bet-area' : '21plus3-bet-area';
+                const area = document.getElementById(areaId);
+                if (area && typeof GameAnimations !== 'undefined') {
+                    GameAnimations.playAnimation(area, 'anim-sidebet-shake', { durationMs: 300 });
+                }
             }
         }
     }
@@ -1523,14 +1580,24 @@ class EvilCasino {
 
         // Reveal Lady Luck hidden cards
         if (this.isBossFight && this.currentBoss?.hideCards) {
-            document.querySelectorAll('.hidden-by-boss').forEach(c => {
-                c.classList.remove('face-down', 'hidden-by-boss');
-            });
-            // Re-render player cards properly
-            this.playerHandEl.innerHTML = '';
-            this.playerHand.forEach(card => {
-                this.playerHandEl.appendChild(this.createCardElement(card));
-            });
+            const hiddenCards = document.querySelectorAll('.hidden-by-boss');
+            const playerCards = Array.from(this.playerHandEl.querySelectorAll('.hidden-by-boss'));
+            const dealerCards = Array.from(this.dealerHandEl.querySelectorAll('.hidden-by-boss'));
+            if (typeof GameAnimations !== 'undefined') {
+                for (let i = 0; i < playerCards.length; i++) {
+                    await GameAnimations.flipCard(playerCards[i], this.playerHand[i], {});
+                }
+                for (let i = 0; i < dealerCards.length; i++) {
+                    const cardIndex = i === 1 ? 1 : i;
+                    await GameAnimations.flipCard(dealerCards[i], this.dealerHand[cardIndex], { rigged: i === 1 });
+                }
+            } else {
+                hiddenCards.forEach(c => c.classList.remove('face-down', 'hidden-by-boss'));
+                this.playerHandEl.innerHTML = '';
+                this.playerHand.forEach(card => {
+                    this.playerHandEl.appendChild(this.createCardElement(card));
+                });
+            }
             this.updateScores();
         }
         
@@ -1611,12 +1678,12 @@ class EvilCasino {
             playWinSound();
             this.showMessage('👯 You beat BOTH twins!', 'win');
             this.addToHistory(playerScore, Math.max(dealerScore, score2), 'win');
-            this.endRound(true);
+            await this.finishRoundWithBeat(true);
         } else {
             playLoseSound();
             this.showMessage('👯 The Twins overwhelm you!', 'lose');
             this.addToHistory(playerScore, Math.max(dealerScore, score2), 'loss');
-            this.endRound(false);
+            await this.finishRoundWithBeat(false);
         }
     }
 
@@ -1629,60 +1696,65 @@ class EvilCasino {
 
         if (dealerScore > 21) {
             playWinSound();
-            // Thief perk: steal extra money on dealer bust
             if (this.hasPerk('thief')) {
                 this.money += 75;
+                this.applyMoneyChange(75);
                 this.showMessage(this.getRandomMessage(this.winMessages) + " 🤏 Pickpocket: +$75!", 'win');
             } else {
                 this.showMessage(this.getRandomMessage(this.winMessages), 'win');
             }
             this.addToHistory(playerScore, dealerScore, 'win');
-            this.endRound(true);
+            await this.finishRoundWithBeat(true);
         } else if (dealerScore === 21 && dealerCardCount > 2) {
             playLoseSound();
             const msg = this.getRandomMessage(this.multiCard21Messages).replace('{count}', dealerCardCount);
             this.showMessage(msg, 'lose');
             this.addToHistory(playerScore, dealerScore, 'loss');
-            this.endRound(false);
+            await this.finishRoundWithBeat(false);
         } else if (dealerScore > playerScore) {
             playLoseSound();
             this.showMessage(this.getRandomMessage(this.loseMessages), 'lose');
             this.addToHistory(playerScore, dealerScore, 'loss');
-            this.endRound(false);
+            await this.finishRoundWithBeat(false);
         } else if (playerScore > dealerScore) {
             playWinSound();
             this.showMessage(this.getRandomMessage(this.winMessages), 'win');
             this.addToHistory(playerScore, dealerScore, 'win');
-            this.endRound(true);
+            await this.finishRoundWithBeat(true);
         } else {
             playChipSound();
             this.showMessage("Push! The dealer considers this a moral victory. 🤷", 'lose');
             this.addToHistory(playerScore, dealerScore, 'push');
             this.money += this.currentBet;
-            this.endRound(null);
+            this.applyMoneyChange(this.currentBet);
+            await this.finishRoundWithBeat(null);
         }
     }
 
     async revealDealerCard() {
         const faceDownCard = this.dealerHandEl.querySelector('.face-down');
         if (faceDownCard) {
-            playCardFlipSound();
-            faceDownCard.classList.remove('face-down');
             const card = this.dealerHand[1];
-            const isRed = ['♥', '♦'].includes(card.suit);
-            faceDownCard.classList.add(isRed ? 'red' : 'black');
-            faceDownCard.classList.add('rigged');
-            faceDownCard.innerHTML = `
-                <div class="card-corner">${card.value}${card.suit}</div>
-                <div class="card-center">${card.suit}</div>
-                <div class="card-corner bottom">${card.value}${card.suit}</div>
-            `;
+            if (typeof GameAnimations !== 'undefined') {
+                await GameAnimations.flipCard(faceDownCard, card, { rigged: true });
+            } else {
+                playCardFlipSound();
+                faceDownCard.classList.remove('face-down');
+                const isRed = ['♥', '♦'].includes(card.suit);
+                faceDownCard.classList.add(isRed ? 'red' : 'black', 'rigged');
+                faceDownCard.innerHTML = `
+                    <div class="card-corner">${card.value}${card.suit}</div>
+                    <div class="card-center">${card.suit}</div>
+                    <div class="card-corner bottom">${card.value}${card.suit}</div>
+                `;
+            }
         }
         this.updateScores();
         await this.delay(400);
     }
 
     endRound(playerWon, isBlackjack = false) {
+        const moneyAtStart = this.money;
         this.gameInProgress = false;
         this.handsPlayed++;
         this.commitPlayedCards();
@@ -1777,7 +1849,13 @@ class EvilCasino {
             const refund = Math.floor(payout / 2);
             this.money -= refund;
             this.showMessage('📋 Auditor taxed your win — half payout!', 'lose');
+            if (typeof GameAnimations !== 'undefined') {
+                GameAnimations.flashElement(this.messageEl, 'anim-flash-loss', 400);
+            }
         }
+
+        this.applyMoneyChange(this.money - moneyAtStart);
+        if (playerWon === true) this.animateWinChips();
 
         this.updateDisplay();
         this.updateRoguelikeDisplay();
@@ -1817,7 +1895,7 @@ class EvilCasino {
             }
 
             this.resetForNewRound(true);
-        }, 1800);
+        }, 1200);
     }
 
     // === ROGUELIKE METHODS ===
@@ -1849,7 +1927,12 @@ class EvilCasino {
             this.upgradeOptionsEl.appendChild(card);
         });
 
-        this.upgradePopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.upgradePopup);
+            GameAnimations.staggerChildren(this.upgradeOptionsEl, '.upgrade-card', 'anim-popup-enter', 80);
+        } else {
+            this.upgradePopup.classList.remove('hidden');
+        }
     }
 
     selectUpgrade(perk) {
@@ -1859,7 +1942,11 @@ class EvilCasino {
         }
         this.activePerks.push(newPerk);
         
-        this.upgradePopup.classList.add('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.closePopup(this.upgradePopup);
+        } else {
+            this.upgradePopup.classList.add('hidden');
+        }
         this.winStreak = 0;
         this.updateRoguelikeDisplay();
     }
@@ -1872,7 +1959,11 @@ class EvilCasino {
             Perks Collected: ${this.activePerks.length}<br>
             You beat Satan Himself!
         `;
-        this.victoryPopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.victoryPopup);
+        } else {
+            this.victoryPopup.classList.remove('hidden');
+        }
     }
 
     // ============================================
@@ -1920,8 +2011,11 @@ class EvilCasino {
             this.eventChoices.appendChild(btn);
         });
         
-        // Show the popup
-        this.eventPopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.eventPopup);
+        } else {
+            this.eventPopup.classList.remove('hidden');
+        }
         playSound('event');
     }
     
@@ -1965,7 +2059,11 @@ class EvilCasino {
         this.updateRoguelikeDisplay();
         
         // Close the event popup
-        this.eventPopup.classList.add('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.closePopup(this.eventPopup);
+        } else {
+            this.eventPopup.classList.add('hidden');
+        }
         this.currentEvent = null;
 
         // Map event rooms return to the floor map
@@ -2320,12 +2418,20 @@ class EvilCasino {
         this.renderPreRoundShopItems();
         this.renderActivePerksInShop();
         this.preRoundShopMoney.textContent = `$${this.money}`;
-        this.preRoundShopPopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.preRoundShopPopup);
+        } else {
+            this.preRoundShopPopup.classList.remove('hidden');
+        }
     }
     
     hidePreRoundShop() {
         if (this.preRoundShopPopup) {
-            this.preRoundShopPopup.classList.add('hidden');
+            if (typeof GameAnimations !== 'undefined') {
+                GameAnimations.closePopup(this.preRoundShopPopup);
+            } else {
+                this.preRoundShopPopup.classList.add('hidden');
+            }
         }
         this.updateDisplay();
         if (this.currentRoom?.type === 'shop' && typeof this.finishCurrentRoom === 'function') {
@@ -2459,6 +2565,7 @@ class EvilCasino {
         
         // Deduct additional bet for second hand
         this.money -= this.currentBet;
+        this.applyMoneyChange(-this.currentBet);
         this.updateDisplay();
         
         // Create two hands
@@ -2480,7 +2587,7 @@ class EvilCasino {
         if (this.splitBtn) this.splitBtn.disabled = true;
         
         // Render split hands
-        this.renderSplitHands(0);
+        this.renderSplitHands(0, true);
         
         playCardDealSound();
         await this.delay(300);
@@ -2492,9 +2599,19 @@ class EvilCasino {
         this.updateSplitScores();
     }
     
-    renderSplitHands(animateHandIndex = -1) {
+    updateSplitActiveHand() {
+        this.playerHandEl.querySelectorAll('.split-hand').forEach((el, i) => {
+            el.classList.toggle('active', i === this.currentSplitHandIndex);
+        });
+    }
+
+    renderSplitHands(animateHandIndex = -1, isInitialSplit = false) {
         this.playerHandEl.innerHTML = '';
         this.playerHandEl.classList.add('split-mode');
+        if (isInitialSplit) {
+            this.playerHandEl.classList.add('anim-split-enter');
+            setTimeout(() => this.playerHandEl.classList.remove('anim-split-enter'), 400);
+        }
         
         this.splitHands.forEach((hand, handIndex) => {
             const handContainer = document.createElement('div');
@@ -2522,7 +2639,11 @@ class EvilCasino {
     
     updateSplitScores() {
         const scores = this.splitHands.map(h => this.calculateScore(h, true));
-        this.playerScoreEl.textContent = `H1: ${scores[0]} | H2: ${scores[1]}`;
+        const text = `H1: ${scores[0]} | H2: ${scores[1]}`;
+        if (this.playerScoreEl.textContent !== text && typeof GameAnimations !== 'undefined') {
+            GameAnimations.playAnimation(this.playerScoreEl, 'anim-bump', { durationMs: 350 });
+        }
+        this.playerScoreEl.textContent = text;
     }
     
     async standSplitHand() {
@@ -2531,7 +2652,7 @@ class EvilCasino {
         
         if (this.currentSplitHandIndex === 0) {
             this.currentSplitHandIndex = 1;
-            this.renderSplitHands();
+            this.updateSplitActiveHand();
             this.showMessage("Now playing Hand 2...");
             // Re-enable buttons for hand 2
             this.hitBtn.disabled = false;
@@ -2591,6 +2712,7 @@ class EvilCasino {
         }
         
         this.money += totalWinnings;
+        if (totalWinnings > 0) this.applyMoneyChange(totalWinnings);
         
         // Determine overall result
         if (wins > losses) {
@@ -2598,17 +2720,17 @@ class EvilCasino {
             this.showMessage(`✂️ Split WIN! ${wins} wins, ${losses} losses. +$${totalWinnings}`, 'win');
             this.winStreak++;
             this.totalWins++;
-            this.endRound(true);
+            await this.finishRoundWithBeat(true);
         } else if (losses > wins) {
             playLoseSound();
             this.showMessage(`✂️ Split LOSS. ${wins} wins, ${losses} losses.`, 'lose');
             this.winStreak = 0;
             this.timesLost++;
-            this.endRound(false);
+            await this.finishRoundWithBeat(false);
         } else {
             playChipSound();
             this.showMessage(`✂️ Split PUSH. ${wins} wins, ${losses} losses.`);
-            this.endRound(null);
+            await this.finishRoundWithBeat(null);
         }
         
         // Reset split state
@@ -2620,6 +2742,11 @@ class EvilCasino {
     // === UI HELPERS ===
 
     resetForNewRound(fromCombat = false) {
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.clearRoundOutcome(this.tableEl);
+        }
+        this._lastPlayerScore = null;
+        this._lastDealerScore = null;
         this.currentBet = 0;
         this.sideBetPP = 0;
         this.sideBet21Plus3 = 0;
@@ -2650,7 +2777,7 @@ class EvilCasino {
         
         this.dealerHandEl.innerHTML = '';
         this.playerHandEl.innerHTML = '';
-        this.playerHandEl.classList.remove('split-mode');
+        this.playerHandEl.classList.remove('split-mode', 'anim-split-enter');
         this.dealerScoreEl.textContent = '';
         this.playerScoreEl.textContent = '';
         this.clearScoreboard();
@@ -2673,6 +2800,9 @@ class EvilCasino {
             this.jesterHandRule = rules[Math.floor(Math.random() * rules.length)];
             const labels = { stand16: 'Dealer stands on 16+', stand18: 'Dealer stands on 18+', flipPayout: 'Wins pay 0.5x / losses refund half' };
             this.showMessage(`🃏 Jester laughs: ${labels[this.jesterHandRule]}`);
+            if (this.tableEl) this.tableEl.classList.add('jester-tint');
+        } else if (this.tableEl) {
+            this.tableEl.classList.remove('jester-tint');
         }
         
         if (this.lastBet > 0 && this.money > 0) {
@@ -2705,12 +2835,20 @@ class EvilCasino {
             Wins: ${this.totalWins} | Streak: ${this.winStreak}/${this.winsNeededForUpgrade}
         `;
         
-        this.postRoundPopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.postRoundPopup);
+        } else {
+            this.postRoundPopup.classList.remove('hidden');
+        }
     }
     
     hidePostRoundPopup() {
         if (this.postRoundPopup) {
-            this.postRoundPopup.classList.add('hidden');
+            if (typeof GameAnimations !== 'undefined') {
+                GameAnimations.closePopup(this.postRoundPopup);
+            } else {
+                this.postRoundPopup.classList.add('hidden');
+            }
         }
         // Ensure money display is current
         this.updateDisplay();
@@ -2731,12 +2869,20 @@ class EvilCasino {
             this.dealerPerkReveal.style.display = 'none';
         }
         
-        this.floorCompletePopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.floorCompletePopup);
+        } else {
+            this.floorCompletePopup.classList.remove('hidden');
+        }
     }
     
     hideFloorCompletePopup() {
         if (this.floorCompletePopup) {
-            this.floorCompletePopup.classList.add('hidden');
+            if (typeof GameAnimations !== 'undefined') {
+                GameAnimations.closePopup(this.floorCompletePopup);
+            } else {
+                this.floorCompletePopup.classList.add('hidden');
+            }
         }
     }
     
@@ -2768,7 +2914,11 @@ class EvilCasino {
 
     showBrokeScreen() {
         this.brokeMessageEl.textContent = this.getRandomMessage(this.brokeMessages);
-        this.brokePopup.classList.remove('hidden');
+        if (typeof GameAnimations !== 'undefined') {
+            GameAnimations.openPopup(this.brokePopup);
+        } else {
+            this.brokePopup.classList.remove('hidden');
+        }
     }
 
     restart() {
@@ -2830,6 +2980,58 @@ class EvilCasino {
         }
     }
 
+    applyMoneyChange(delta) {
+        if (!delta) return;
+        this._pendingMoneyDelta = (this._pendingMoneyDelta || 0) + delta;
+    }
+
+    async animateCollectChips() {
+        const stacks = [this.mainChipStack, this.ppChipStack, this.plus3ChipStack].filter(Boolean);
+        const chips = stacks.flatMap(s => Array.from(s.querySelectorAll('.chip')));
+        if (!chips.length || typeof GameAnimations === 'undefined') return;
+        chips.forEach(c => c.classList.add('anim-chip-collect'));
+        await this.delay(200);
+        stacks.forEach(s => { s.innerHTML = ''; });
+    }
+
+    async animateClearChips() {
+        const stacks = [this.mainChipStack, this.ppChipStack, this.plus3ChipStack].filter(Boolean);
+        const chips = stacks.flatMap(s => Array.from(s.querySelectorAll('.chip')));
+        if (!chips.length) {
+            stacks.forEach(s => { s.innerHTML = ''; });
+            return;
+        }
+        if (typeof GameAnimations !== 'undefined') {
+            chips.forEach(c => c.classList.add('anim-chip-clear'));
+            await this.delay(150);
+        }
+        stacks.forEach(s => { s.innerHTML = ''; });
+    }
+
+    animateWinChips() {
+        if (typeof GameAnimations === 'undefined' || !this.mainBetArea) return;
+        const chip = document.createElement('div');
+        chip.className = 'chip anim-chip-win';
+        chip.style.cssText = 'position:absolute;width:20px;height:20px;background:var(--gold);border-radius:50%;';
+        const area = this.mainBetArea || document.getElementById('main-bet-area');
+        if (!area) return;
+        area.style.position = 'relative';
+        area.appendChild(chip);
+        setTimeout(() => chip.remove(), 500);
+    }
+
+    async finishRoundWithBeat(playerWon, isBlackjack = false) {
+        const outcome = playerWon === true ? 'win' : playerWon === false ? 'loss' : 'push';
+        if (typeof GameAnimations !== 'undefined') {
+            await GameAnimations.playRoundOutcome(this.tableEl, outcome, {
+                playerCards: Array.from(this.playerHandEl.querySelectorAll('.card')),
+                dealerCards: Array.from(this.dealerHandEl.querySelectorAll('.card')),
+                splitContainers: this.isSplitHand ? Array.from(this.playerHandEl.querySelectorAll('.split-hand')) : null
+            });
+        }
+        this.endRound(playerWon, isBlackjack);
+    }
+
     updateDisplay() {
         this.moneyDisplay.textContent = `$${this.money}`;
 
@@ -2838,11 +3040,21 @@ class EvilCasino {
         } else {
             this.moneyDisplay.classList.remove('losing');
         }
+
+        if (this._pendingMoneyDelta && typeof GameAnimations !== 'undefined') {
+            GameAnimations.animateMoneyChange(this._pendingMoneyDelta, this.moneyDisplay);
+            this._pendingMoneyDelta = 0;
+        }
+        this._lastMoney = this.money;
     }
 
     updateScores(hideDealer = false) {
-        const playerScore = this.calculateScore(this.playerHand, true);
-        this.playerScoreEl.textContent = `Score: ${playerScore}`;
+        const playerScore = this.isSplitHand
+            ? null
+            : this.calculateScore(this.playerHand, true);
+        if (!this.isSplitHand) {
+            this.playerScoreEl.textContent = `Score: ${playerScore}`;
+        }
 
         let dealerScore;
         let visibleDealerScore;
@@ -2854,8 +3066,35 @@ class EvilCasino {
             dealerScore = this.calculateScore(this.dealerHand);
             this.dealerScoreEl.textContent = `Score: ${dealerScore}`;
         }
+
+        if (!this.isSplitHand) {
+            this._animateScoreChange(playerScore, dealerScore, hideDealer);
+        }
         
-        this.updateScoreboard(playerScore, hideDealer ? visibleDealerScore : dealerScore, hideDealer);
+        this.updateScoreboard(playerScore || 0, hideDealer ? visibleDealerScore : dealerScore, hideDealer);
+    }
+
+    _animateScoreChange(playerScore, dealerScore, hideDealer) {
+        if (typeof GameAnimations === 'undefined') return;
+        const prevP = this._lastPlayerScore;
+        const prevD = this._lastDealerScore;
+
+        if (prevP !== null && playerScore !== prevP) {
+            const busted = prevP <= 21 && playerScore > 21;
+            GameAnimations.playAnimation(this.playerScoreEl, busted ? 'anim-bust' : 'anim-bump', { durationMs: busted ? 400 : 350 });
+            GameAnimations.playAnimation(this.scoreboardPlayerEl, busted ? 'anim-bust' : 'anim-bump', { durationMs: busted ? 400 : 350 });
+        }
+        if (!hideDealer && prevD !== null && dealerScore !== prevD) {
+            const busted = prevD <= 21 && dealerScore > 21;
+            GameAnimations.playAnimation(this.dealerScoreEl, busted ? 'anim-bust' : 'anim-bump', { durationMs: busted ? 400 : 350 });
+            GameAnimations.playAnimation(this.scoreboardDealerEl, busted ? 'anim-bust' : 'anim-bump', { durationMs: busted ? 400 : 350 });
+        }
+        if (!hideDealer) {
+            this._lastPlayerScore = playerScore;
+            this._lastDealerScore = dealerScore;
+        } else {
+            this._lastPlayerScore = playerScore;
+        }
     }
     
     updateScoreboard(playerScore, dealerScore, hideDealer = false) {
